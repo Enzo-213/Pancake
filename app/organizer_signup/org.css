@@ -1,0 +1,102 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  body {
+    height: 100vh;
+    background: linear-gradient(to bottom, #d32f2f, #f3f3f3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 420px;
+  }
+  
+  .card {
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    text-align: center;
+  }
+  
+  .card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  
+  .subtitle {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 20px;
+  }
+  
+  .input-group {
+    margin-bottom: 14px;
+  }
+  
+  .input-group input,
+  .input-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #f7f7f7;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+  }
+  
+  .input-group input:focus,
+  .input-group select:focus {
+    border-color: #d32f2f;
+    background: #fff;
+  }
+  
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #d32f2f;
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.2s;
+  }
+  
+  button:hover {
+    background: #b71c1c;
+  }
+  
+  .login {
+    margin-top: 15px;
+    font-size: 13px;
+  }
+  
+  .login a {
+    color: #d32f2f;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .terms {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #888;
+  }
+  
+  .terms a {
+    color: #d32f2f;
+    text-decoration: none;
+  }

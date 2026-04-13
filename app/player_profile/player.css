@@ -1,0 +1,168 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+  
+    /* Background image */
+    background: url("assets/bg.jpg") no-repeat center center/cover;
+  
+    text-align: center;
+  }
+  
+  /* Red overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(211, 47, 47, 0.85);
+    z-index: -1;
+  }
+  
+  .header {
+    color: white;
+    padding: 30px 0;
+  }
+  
+  .profile-card {
+    background: #f0f0f0;
+    width: 80%;
+    margin: auto;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+  
+  .profile-top {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  /* Player avatar */
+  .avatar {
+    width: 100px;
+    height: 100px;
+    background: url("assets/player.png") no-repeat center/cover;
+    border-radius: 50%;
+  }
+  
+  .info {
+    text-align: left;
+  }
+  
+  .badge {
+    background: #e53935;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    display: inline-block;
+    margin: 5px 0;
+  }
+  
+  /* Info icons */
+  .info p {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .info p.location::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    background: url("assets/location.png") no-repeat center/contain;
+  }
+  
+  .info p.email::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    background: url("assets/email.png") no-repeat center/contain;
+  }
+  
+  /* Stats */
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 30px 0;
+  }
+  
+  .stat-box {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    width: 25%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  
+  /* Stat icons */
+  .stat-box::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: auto;
+    margin-bottom: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  
+  .stat-box.trophy::before {
+    background-image: url("assets/trophy.png");
+  }
+  
+  .stat-box.ribbon::before {
+    background-image: url("assets/ribbon.png");
+  }
+  
+  .stat-box.group::before {
+    background-image: url("assets/group.png");
+  }
+  
+  .edit-btn {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .section-title {
+    margin-top: 40px;
+    color: white;
+  }
+  
+  /* Tournaments */
+  .tournaments {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .tournament-card {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    width: 220px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  
+  /* Taekwondo icon */
+  .tournament-card::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: auto;
+    margin-bottom: 10px;
+    background: url("assets/taekwondo.png") no-repeat center/contain;
+  }
+  
+  .tournament-card span {
+    color: red;
+    font-size: 12px;
+  }
