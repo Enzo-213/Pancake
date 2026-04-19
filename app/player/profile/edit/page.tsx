@@ -12,6 +12,10 @@ export default function EditProfilePage() {
   const [dojo, setDojo] = useState(searchParams.get("dojo") || "");
   const [belt, setBelt] = useState(searchParams.get("belt") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [dob, setDob] = useState(searchParams.get("dob") || "");
+  const [instructor, setInstructor] = useState(searchParams.get("instructor") || "");
+  const [certificate] = useState(searchParams.get("certificate") || "Not uploaded");
+  const [status] = useState(searchParams.get("status") || "pending");
 
   // ✅ Improved input style (better visibility)
   const inputStyle =
@@ -25,7 +29,15 @@ export default function EditProfilePage() {
     router.push(
       `/player/profile?name=${encodeURIComponent(
         fullName
-      )}&dojo=${encodeURIComponent(dojo)}&belt=${belt}&category=${category}`
+      )}&dojo=${encodeURIComponent(dojo)}&belt=${encodeURIComponent(
+        belt
+      )}&category=${encodeURIComponent(category)}&dob=${encodeURIComponent(
+        dob
+      )}&instructor=${encodeURIComponent(
+        instructor
+      )}&certificate=${encodeURIComponent(
+        certificate
+      )}&status=${encodeURIComponent(status)}`
     );
   };
 
@@ -93,6 +105,35 @@ export default function EditProfilePage() {
               <option>Kumite</option>
               <option>Both</option>
             </select>
+          </div>
+
+          <div>
+            <label className={labelStyle}>Date of Birth</label>
+            <input
+              type="date"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              className={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className={labelStyle}>Instructor</label>
+            <input
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              placeholder="Enter your instructor"
+              className={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className={labelStyle}>Verification Status</label>
+            <input
+              value={status.toUpperCase()}
+              className={`${inputStyle} bg-gray-100 text-gray-500`}
+              readOnly
+            />
           </div>
 
           {/* BUTTON */}

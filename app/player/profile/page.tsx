@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 // 🔥 Your stats (kept)
 const playerStats = [
@@ -17,14 +18,84 @@ const upcomingMatches = [
   { event: "Weekly Local Scrimmage", date: "Oct 18, 2026", time: "5:30 PM" },
 ];
 
-export default function PlayerProfilePage() {
-  const searchParams = useSearchParams();
+type Profile = {
+  id: string;
+  full_name: string;
+  dojo: string;
+  belt_rank: string;
+  category: string;
+  dob: string;
+  instructor: string;
+  status: string;
+  certificate_url?: string;
+};
 
-  // ✅ Get data from signup
-  const playerName = searchParams.get("name") || "New Player";
-  const dojo = searchParams.get("dojo") || "Independent";
-  const belt = searchParams.get("belt") || "Not Set";
-  const category = searchParams.get("category") || "Not Set";
+export default function PlayerProfilePage() {
+  const supabase = getSupabaseBrowserClient();
+
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [certificateUrl, setCertificateUrl] = useState<string | null>(null); // ✅ FIXED
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        console.log("No user logged in");
+        return;
+      }
+
+      const { data, error } = await (supabase as any)
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("PROFILE FETCH ERROR:", error.message);
+        return;
+      }
+
+      setProfile(data);
+
+      // 🔥 FIX: Generate signed URL INSIDE here
+      if (data?.certificate_url) {
+        const { data: signedData, error: signedError } =
+          await supabase.storage
+            .from("certificates")
+            .createSignedUrl(data.certificate_url, 60);
+
+        if (signedError) {
+          console.error("SIGNED URL ERROR:", signedError.message);
+        } else {
+          setCertificateUrl(signedData.signedUrl);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // 🔄 Loading fallback
+  if (!profile) {
+    return <p className="p-6">Loading profile...</p>;
+  }
+
+  const playerName = profile.full_name || "New Player";
+  const dojo = profile.dojo || "Independent";
+  const belt = profile.belt_rank || "Not Set";
+  const category = profile.category || "Not Set";
+  const dob = profile.dob || "Not Set";
+  const instructor = profile.instructor || "Not Set";
+  const status = profile.status || "pending";
+
+  const statusColor =
+    status === "verified"
+      ? "text-green-600"
+      : status === "rejected"
+      ? "text-red-600"
+      : "text-yellow-600";
 
   return (
     <main className="min-h-screen bg-white text-gray-900 font-sans">
@@ -56,7 +127,7 @@ export default function PlayerProfilePage() {
             Karate Profile 🥋
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Dojo</p>
               <p className="font-semibold">{dojo}</p>
@@ -73,13 +144,40 @@ export default function PlayerProfilePage() {
             </div>
 
             <div>
+              <p className="text-gray-500">Date of Birth</p>
+              <p className="font-semibold">{dob}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Instructor</p>
+              <p className="font-semibold">{instructor}</p>
+            </div>
+
+            <div>
               <p className="text-gray-500">Status</p>
-              <p className="font-semibold text-green-600">Active</p>
+              <p className={`font-semibold ${statusColor}`}>
+                {status.toUpperCase()}
+              </p>
             </div>
           </div>
+
+          {/* 🔥 CERTIFICATE (NEW) */}
+          {certificateUrl && (
+            <div className="mt-4">
+              <p className="text-gray-500 text-sm mb-1">Certificate</p>
+
+              <a
+                href={certificateUrl}
+                target="_blank"
+                className="text-blue-600 underline"
+              >
+                View Certificate
+              </a>
+            </div>
+          )}
         </section>
 
-        {/* 🟢 PLAYER STATS (YOUR CODE INTEGRATED) */}
+        {/* 🟢 PLAYER STATS */}
         <section>
           <h2 className="text-xl font-bold text-gray-900 mb-6">
             Key Performance
@@ -102,7 +200,7 @@ export default function PlayerProfilePage() {
           </div>
         </section>
 
-        {/* 🔵 UPCOMING EVENTS (YOUR CODE INTEGRATED) */}
+        {/* 🔵 UPCOMING EVENTS */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">
@@ -121,18 +219,15 @@ export default function PlayerProfilePage() {
             {upcomingMatches.map((match) => (
               <div
                 key={match.event}
-                className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex items-center justify-between gap-4 hover:border-gray-200 transition shadow-sm"
+                className="bg-gray-50 p-6 rounded-2xl border flex justify-between shadow-sm"
               >
                 <div>
-                  <p className="font-semibold text-gray-950 text-lg">
-                    {match.event}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="font-semibold">{match.event}</p>
+                  <p className="text-sm text-gray-500">
                     {match.date} • {match.time}
                   </p>
                 </div>
-
-                <button className="bg-red-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-700 transition active:scale-95 text-sm">
+                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm">
                   View Details
                 </button>
               </div>
@@ -140,41 +235,8 @@ export default function PlayerProfilePage() {
           </div>
         </section>
 
-        {/* ⚙️ SETTINGS */}
-        <section className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm mt-12">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            Account & Personalization
-          </h2>
-
-          <p className="text-gray-600 text-sm mb-6">
-            Manage your profile details and app preferences.
-          </p>
-
-          <div className="flex flex-wrap gap-4">
-            <Link
-              href={`/player/profile/edit?name=${playerName}&dojo=${dojo}&belt=${belt}&category=${category}`}
-              className="bg-white text-gray-800 font-semibold px-6 py-3 rounded-xl border border-gray-200 hover:bg-gray-100 transition shadow-sm"
-            >
-              Edit Public Profile
-            </Link>
-
-            <Link
-              href="/player/settings"
-              className="bg-white text-gray-800 font-semibold px-6 py-3 rounded-xl border border-gray-200 hover:bg-gray-100 transition shadow-sm"
-            >
-              Notification Settings
-            </Link>
-
-            <Link
-              href="/login"
-              className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline ml-auto"
-            >
-              Log out
-            </Link>
-          </div>
-        </section>
-
       </div>
     </main>
   );
 }
+
