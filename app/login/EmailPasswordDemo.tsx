@@ -67,7 +67,9 @@ export default function EmailPasswordDemo({
   }
 
   // 3. Redirect based on the role
-  if (profile.role === "organizer") {
+  if (profile.role === "admin") {
+  router.push("/admin/verify");
+  } else if (profile.role === "organizer") {
     router.push("/organizer/profile");
   } else {
     router.push("/player/profile");
