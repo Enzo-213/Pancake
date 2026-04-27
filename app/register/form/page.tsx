@@ -218,17 +218,9 @@ export default function RegisterPage() {
                 <option>Yellow</option>
                 <option>Green</option>
                 <option>Blue</option>
+                <option>Purple</option>
                 <option>Brown</option>
                 <option>Black</option>
-              </select>
-
-              <select value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={inputStyle} required>
-                <option value="">Category</option>
-                <option>Kata</option>
-                <option>Kumite</option>
-                <option>Both</option>
               </select>
 
               <input
