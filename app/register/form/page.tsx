@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [dojo, setDojo] = useState("");
   const [beltRank, setBeltRank] = useState("");
-  const [category, setCategory] = useState("");
+  // 🔥 CATEGORY STATE REMOVED
   const [dob, setDob] = useState("");
   const [instructor, setInstructor] = useState("");
   const [certificate, setCertificate] = useState<File | null>(null);
@@ -30,12 +30,11 @@ export default function RegisterPage() {
   const inputStyle =
     "w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-900";
 
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 🔥 VALIDATION
+    // 🔥 VALIDATION (CATEGORY REMOVED)
     if (role === "player") {
       if (
         !email ||
@@ -43,8 +42,7 @@ export default function RegisterPage() {
         !fullName ||
         !dob ||
         !instructor ||
-        !beltRank ||
-        !category
+        !beltRank
       ) {
         alert("Please fill in all required fields.");
         setLoading(false);
@@ -66,7 +64,7 @@ export default function RegisterPage() {
       }
     }
 
-    // 🔥 CREATE USER
+    // 🔥 CREATE AUTH USER
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -82,7 +80,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // 🔥 GET USER
     let user = data.user;
 
     if (!user) {
@@ -96,7 +93,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // 🔥 UPLOAD CERTIFICATE (NEW)
+    // 🔥 UPLOAD CERTIFICATE
     let certificatePath = null;
 
     if (role === "player" && certificate) {
@@ -108,16 +105,16 @@ export default function RegisterPage() {
         .upload(filePath, certificate, { upsert: true });
 
       if (uploadError) {
-        console.error("UPLOAD ERROR FULL:", uploadError);
+        console.error("UPLOAD ERROR:", uploadError.message);
         alert(uploadError.message);
         setLoading(false);
         return;
       }
 
-      certificatePath = filePath; // 🔥 STORE PATH ONLY (PRIVATE BUCKET)
+      certificatePath = filePath;
     }
 
-    // 🔥 SAVE PROFILE
+    // 🔥 SAVE PROFILE (CATEGORY REMOVED FROM PAYLOAD)
     if (role === "player") {
       const { error: profileError } = await (supabase as any)
         .from("profiles")
@@ -126,10 +123,10 @@ export default function RegisterPage() {
           full_name: fullName,
           dojo,
           belt_rank: beltRank,
-          category,
+          // 🔥 CATEGORY REMOVED HERE
           dob,
           instructor,
-          certificate_url: certificatePath, // 🔥 NEW
+          certificate_url: certificatePath,
           role: "player",
           status: "pending",
         });
@@ -137,6 +134,8 @@ export default function RegisterPage() {
       if (profileError) {
         console.error("PROFILE ERROR:", profileError.message);
         alert("Failed to save player profile");
+        setLoading(false);
+        return;
       }
     }
 
@@ -154,6 +153,8 @@ export default function RegisterPage() {
       if (orgError) {
         console.error("ORG ERROR:", orgError.message);
         alert("Failed to save organizer profile");
+        setLoading(false);
+        return;
       }
     }
 
@@ -168,8 +169,6 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
-
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-md border">
@@ -183,7 +182,6 @@ export default function RegisterPage() {
         </p>
 
         <form onSubmit={handleSignUp} className="flex flex-col gap-4">
-
           <input type="email" placeholder="Email" value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={inputStyle} required />
@@ -249,10 +247,8 @@ export default function RegisterPage() {
             className="mt-2 w-full bg-red-600 text-white font-semibold py-4 rounded-xl hover:bg-red-700 transition">
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
-
         </form>
       </div>
     </main>
   );
 }
-
