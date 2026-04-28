@@ -72,7 +72,7 @@ export default function EmailPasswordDemo({
   } else if (profile.role === "organizer") {
     router.push("/organizer/profile");
   } else {
-    router.push("/player/profile");
+    router.push("/event_browsing");
   }
 
   setLoading(false);
