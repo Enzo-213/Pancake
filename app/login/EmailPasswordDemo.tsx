@@ -1,9 +1,10 @@
 "use client";
 
-import { getSupabaseBrowserClient, Database } from "@/lib/supabase/browser-client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // 1. Import the router
+import { useRouter } from "next/navigation";
+import Link from "next/link"; // ✅ Import Link
 
 type EmailPasswordDemoProps = {
   user?: User | null;
@@ -13,7 +14,7 @@ export default function EmailPasswordDemo({
   user = null,
 }: EmailPasswordDemoProps) {
   const supabase = getSupabaseBrowserClient();
-  const router = useRouter(); // 2. Initialize the router
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,48 +36,43 @@ export default function EmailPasswordDemo({
   }, [supabase]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setLoading(true);
-  setStatus("");
+    event.preventDefault();
+    setLoading(true);
+    setStatus("");
 
-  // 1. We must destructure 'data' here so it can be used below
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error || !data.user) {
-    setStatus(error?.message || "Login failed");
+    if (error || !data.user) {
+      setStatus(error?.message || "Login failed");
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await (supabase as any)
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      setStatus("Error fetching profile. Ensure your account is fully set up.");
+      setLoading(false);
+      return;
+    }
+
+    if (profile.role === "admin") {
+      router.push("/admin/verify");
+    } else if (profile.role === "organizer") {
+      router.push("/organizer/profile");
+    } else {
+      router.push("/event_browsing");
+    }
+
     setLoading(false);
-    return;
   }
-
-  // 2. Fetch the role. 
-  // We use 'as any' as a quick fix to bypass the 'never' type error 
-  // if your Database types aren't perfectly synced yet.
-  const { data: profile, error: profileError } = await (supabase as any)
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .single();
-
-  if (profileError || !profile) {
-    setStatus("Error fetching profile. Ensure your account is fully set up.");
-    setLoading(false);
-    return;
-  }
-
-  // 3. Redirect based on the role
-  if (profile.role === "admin") {
-  router.push("/admin/verify");
-  } else if (profile.role === "organizer") {
-    router.push("/organizer/profile");
-  } else {
-    router.push("/event_browsing");
-  }
-
-  setLoading(false);
-}
 
   async function handleGoogleLogin() {
     setGoogleLoading(true);
@@ -95,19 +91,6 @@ export default function EmailPasswordDemo({
     }
   }
 
-  async function handleSignOut() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      setStatus(error.message);
-      return;
-    }
-
-    setCurrentUser(null);
-    setStatus("Signed out successfully.");
-  }
-
-  // ✅ LOGIN UI
   return (
     <div className="rounded-[20px] bg-white px-8 py-9 shadow-[0_18px_40px_rgba(0,0,0,0.25)]">
       <h2 className="mb-7 text-center text-[2rem] font-extrabold text-black">
@@ -125,7 +108,7 @@ export default function EmailPasswordDemo({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-12 w-full rounded-xl bg-[#f2f2f2] px-4 outline-none focus:border focus:border-red-500 text-gray-900 placeholder: text-gray-400"
+            className="h-12 w-full rounded-xl bg-[#f2f2f2] px-4 outline-none focus:border focus:border-red-500 text-gray-900 placeholder:text-gray-400"
           />
         </div>
 
@@ -139,7 +122,7 @@ export default function EmailPasswordDemo({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="h-12 w-full rounded-xl bg-[#f2f2f2] px-4 outline-none focus:border focus:border-red-500 text-gray-900 placeholder: text-gray-400"
+            className="h-12 w-full rounded-xl bg-[#f2f2f2] px-4 outline-none focus:border focus:border-red-500 text-gray-900 placeholder:text-gray-400"
           />
         </div>
 
@@ -150,26 +133,34 @@ export default function EmailPasswordDemo({
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 h-12 w-full rounded-xl bg-[#d62828] text-lg font-bold text-white shadow-md hover:bg-[#bb1f1f]"
+          className="mt-2 h-12 w-full rounded-xl bg-[#d62828] text-lg font-bold text-white shadow-md hover:bg-[#bb1f1f] cursor-pointer"
         >
           {loading ? "LOGGING IN..." : "LOG IN"}
         </button>
       </form>
 
-      {/* 🔥 GOOGLE BUTTON WITH REAL ICON */}
       <button
         onClick={handleGoogleLogin}
         disabled={googleLoading}
-        className="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#d62828] text-lg font-medium text-white shadow-md hover:bg-[#bb1f1f]"
+        className="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#d62828] text-lg font-medium text-white shadow-md hover:bg-[#bb1f1f] cursor-pointer"
       >
         <img
           src="/images/google.png"
           alt="Google"
           className="h-5 w-5"
         />
-
         {googleLoading ? "Loading..." : "Log In with Google"}
       </button>
+
+      {/* ✅ Feature: Back to Sign Up */}
+      <div className="mt-6 text-center">
+        <Link 
+          href="/register" 
+          className="text-sm font-bold text-red-600 underline hover:text-red-800 transition-colors cursor-pointer"
+        >
+          Back to Sign Up
+        </Link>
+      </div>
     </div>
   );
 }
