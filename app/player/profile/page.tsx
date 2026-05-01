@@ -24,7 +24,6 @@ type Profile = {
   full_name: string;
   dojo: string;
   belt_rank: string;
-  category: string;
   dob: string;
   instructor: string;
   status: string;
@@ -162,11 +161,6 @@ export default function PlayerProfilePage() {
             </div>
 
             <div>
-              <p className="text-gray-500">Category</p>
-              <p className="font-semibold">{profile.category || "Not Set"}</p>
-            </div>
-
-            <div>
               <p className="text-gray-500">Date of Birth</p>
               <p className="font-semibold">{profile.dob || "Not Set"}</p>
             </div>
@@ -197,6 +191,15 @@ export default function PlayerProfilePage() {
               </a>
             </div>
           )}
+
+        <div className="mt-6">
+          <Link
+            href="/player/profile/edit"
+            className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
+          >
+            Edit Profile
+          </Link>
+        </div>
         </section>
 
         {/* 🟢 PLAYER STATS */}
