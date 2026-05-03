@@ -5,13 +5,14 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 type VerificationStatus = "pending" | "verified" | "rejected";
 
-type PlayerVerification = {
+type OrganizerVerification = {
   id: string;
   name: string;
-  dojo: string;
-  beltRank: string;
-  instructor: string;
-  dob: string;
+  location: string;
+  contactNumber?: string;
+  karateStyle?: string;
+  federation?: string;
+  position?: string;
   certificate_url?: string;
   submittedAt?: string;
   status: VerificationStatus;
@@ -20,16 +21,19 @@ type PlayerVerification = {
 export default function AdminVerifyPage() {
   const supabase = getSupabaseBrowserClient();
 
-  const [players, setPlayers] = useState<PlayerVerification[]>([]);
+  const [organizers, setOrganizers] = useState<
+    OrganizerVerification[]
+  >([]);
+
   const [loading, setLoading] = useState(true);
 
-  // 🔥 FETCH REAL PLAYERS
+  // 🔥 FETCH ORGANIZERS ONLY
   useEffect(() => {
-    const fetchPlayers = async () => {
+    const fetchOrganizers = async () => {
       const { data, error } = await (supabase as any)
         .from("profiles")
         .select("*")
-        .eq("role", "player")
+        .eq("role", "organizer")
         .eq("status", "pending");
 
       if (error) {
@@ -37,53 +41,59 @@ export default function AdminVerifyPage() {
         return;
       }
 
-      const formatted = data.map((p: any) => ({
-        id: p.id,
-        name: p.full_name,
-        dojo: p.dojo,
-        beltRank: p.belt_rank,
-        instructor: p.instructor,
-        dob: p.dob,
-        certificate_url: p.certificate_url,
-        submittedAt: p.created_at,
-        status: p.status,
+      const formatted = data.map((o: any) => ({
+        id: o.id,
+        name: o.full_name,
+        location: o.dojo,
+        contactNumber: o.contact_number,
+        karateStyle: o.karate_style,
+        federation: o.federation,
+        position: o.instructor,
+        certificate_url: o.certificate_url,
+        submittedAt: o.created_at,
+        status: o.status,
       }));
 
-      setPlayers(formatted);
+      setOrganizers(formatted);
       setLoading(false);
     };
 
-    fetchPlayers();
+    fetchOrganizers();
   }, []);
 
   const pendingCount = useMemo(
-    () => players.filter((player) => player.status === "pending").length,
-    [players]
+    () =>
+      organizers.filter(
+        (organizer) => organizer.status === "pending"
+      ).length,
+    [organizers]
   );
 
-  // 🔥 UPDATE STATUS IN DATABASE
+  // 🔥 APPROVE / REJECT ORGANIZER
   const handleStatusChange = async (
-    playerId: string,
+    organizerId: string,
     nextStatus: Exclude<VerificationStatus, "pending">
   ) => {
     const { error } = await (supabase as any)
       .from("profiles")
       .update({ status: nextStatus })
-      .eq("id", playerId);
+      .eq("id", organizerId);
 
     if (error) {
       console.error(error.message);
-      alert("Failed to update status");
+      alert("Failed to update organizer status");
       return;
     }
 
-    // 🔄 Remove the player from the pending list immediately after approval/rejection
-    setPlayers((currentPlayers) =>
-      currentPlayers.filter((player) => player.id !== playerId)
+    // 🔄 Remove from pending list instantly
+    setOrganizers((currentOrganizers) =>
+      currentOrganizers.filter(
+        (organizer) => organizer.id !== organizerId
+      )
     );
   };
 
-  // 🔥 GENERATE SIGNED URL
+  // 🔥 VIEW CERTIFICATE
   const viewCertificate = async (path?: string) => {
     if (!path) return;
 
@@ -112,7 +122,7 @@ export default function AdminVerifyPage() {
   };
 
   if (loading) {
-    return <p className="p-6">Loading players...</p>;
+    return <p className="p-6">Loading organizers...</p>;
   }
 
   return (
@@ -122,107 +132,167 @@ export default function AdminVerifyPage() {
         {/* HEADER */}
         <section className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-600">
-                Admin Verification
+                Platform Admin
               </p>
+
               <h1 className="mt-2 text-3xl font-extrabold text-gray-950">
-                Review player belt certificates
+                Organizer Verification Center
               </h1>
+
               <p className="mt-3 max-w-2xl text-sm text-gray-600">
-                Review uploaded certificates and approve or reject players.
+                Review dojo legitimacy, federation affiliation,
+                and organizer credentials before granting
+                tournament management access.
               </p>
             </div>
 
             <div className="rounded-2xl bg-red-50 px-5 py-4 text-right">
-              <p className="text-sm text-red-700">Pending reviews</p>
+              <p className="text-sm text-red-700">
+                Pending organizer reviews
+              </p>
+
               <p className="text-3xl font-extrabold text-red-600">
                 {pendingCount}
               </p>
             </div>
+
           </div>
         </section>
 
-        {/* PLAYERS */}
+        {/* ORGANIZERS */}
         <section className="grid gap-6">
-          {players.map((player) => (
+          {organizers.map((organizer) => (
             <article
-              key={player.id}
+              key={organizer.id}
               className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm"
             >
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 
-                {/* INFO */}
+                {/* ORGANIZER INFO */}
                 <div className="space-y-4">
+
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-2xl font-bold text-gray-950">
-                      {player.name}
+                      {organizer.name}
                     </h2>
 
                     <span
                       className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${getStatusClasses(
-                        player.status
+                        organizer.status
                       )}`}
                     >
-                      {player.status}
+                      {organizer.status}
                     </span>
                   </div>
 
                   <div className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-3">
+
                     <div>
-                      <p className="text-gray-500">Dojo / Club</p>
-                      <p className="font-semibold">{player.dojo}</p>
+                      <p className="text-gray-500">
+                        Organization Location
+                      </p>
+
+                      <p className="font-semibold">
+                        {organizer.location}
+                      </p>
                     </div>
+
                     <div>
-                      <p className="text-gray-500">Belt Rank</p>
-                      <p className="font-semibold">{player.beltRank}</p>
+                      <p className="text-gray-500">
+                        Contact Number
+                      </p>
+
+                      <p className="font-semibold">
+                        {organizer.contactNumber || "Not provided"}
+                      </p>
                     </div>
+
                     <div>
-                      <p className="text-gray-500">Instructor</p>
-                      <p className="font-semibold">{player.instructor}</p>
+                      <p className="text-gray-500">
+                        Karate Style
+                      </p>
+
+                      <p className="font-semibold">
+                        {organizer.karateStyle || "Not provided"}
+                      </p>
                     </div>
+
                     <div>
-                      <p className="text-gray-500">Date of Birth</p>
-                      <p className="font-semibold">{player.dob}</p>
+                      <p className="text-gray-500">
+                        Federation
+                      </p>
+
+                      <p className="font-semibold">
+                        {organizer.federation || "Independent"}
+                      </p>
                     </div>
+
+                    <div>
+                      <p className="text-gray-500">
+                        Position
+                      </p>
+
+                      <p className="font-semibold">
+                        {organizer.position || "Organizer"}
+                      </p>
+                    </div>
+
                   </div>
 
                   {/* 🔥 VIEW CERTIFICATE */}
-                  {player.certificate_url && (
+                  {organizer.certificate_url && (
                     <button
-                      onClick={() => viewCertificate(player.certificate_url)}
+                      onClick={() =>
+                        viewCertificate(
+                          organizer.certificate_url
+                        )
+                      }
                       className="text-blue-600 underline text-sm"
                     >
-                      View Certificate
+                      View Organization Certificate
                     </button>
                   )}
+
                 </div>
 
                 {/* ACTIONS */}
                 <div className="min-w-55 rounded-2xl bg-gray-50 p-4">
+
                   <p className="text-sm font-semibold text-gray-700">
-                    Admin Actions
+                    Platform Actions
                   </p>
 
                   <div className="mt-4 flex flex-col gap-3">
+
                     <button
                       onClick={() =>
-                        handleStatusChange(player.id, "verified")
+                        handleStatusChange(
+                          organizer.id,
+                          "verified"
+                        )
                       }
                       className="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700"
                     >
-                      Approve Certificate
+                      Approve Organizer
                     </button>
 
                     <button
                       onClick={() =>
-                        handleStatusChange(player.id, "rejected")
+                        handleStatusChange(
+                          organizer.id,
+                          "rejected"
+                        )
                       }
                       className="rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700"
                     >
-                      Reject Submission
+                      Reject Organizer
                     </button>
+
                   </div>
+
                 </div>
 
               </div>
