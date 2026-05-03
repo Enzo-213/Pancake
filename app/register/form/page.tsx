@@ -11,31 +11,37 @@ export default function RegisterPage() {
 
   const role = searchParams.get("role") || "player";
 
+  // 🔥 COMMON
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // 🔥 PLAYER STATES
   const [fullName, setFullName] = useState("");
   const [dojo, setDojo] = useState("");
   const [beltRank, setBeltRank] = useState("");
-  const [category, setCategory] = useState("");
   const [dob, setDob] = useState("");
   const [instructor, setInstructor] = useState("");
   const [certificate, setCertificate] = useState<File | null>(null);
 
+  // 🔥 ORGANIZER STATES
   const [orgName, setOrgName] = useState("");
   const [location, setLocation] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [karateStyle, setKarateStyle] = useState("");
+  const [federation, setFederation] = useState("");
+  const [position, setPosition] = useState("");
+  const [orgCertificate, setOrgCertificate] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
 
   const inputStyle =
     "w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-900";
 
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 🔥 VALIDATION
+    // 🔥 PLAYER VALIDATION
     if (role === "player") {
       if (
         !email ||
@@ -43,10 +49,9 @@ export default function RegisterPage() {
         !fullName ||
         !dob ||
         !instructor ||
-        !beltRank ||
-        !category
+        !beltRank
       ) {
-        alert("Please fill in all required fields.");
+        alert("Please fill in all required player fields.");
         setLoading(false);
         return;
       }
@@ -58,15 +63,31 @@ export default function RegisterPage() {
       }
     }
 
+    // 🔥 ORGANIZER VALIDATION
     if (role === "organizer") {
-      if (!email || !password || !orgName) {
-        alert("Please fill in all required fields.");
+      if (
+        !email ||
+        !password ||
+        !orgName ||
+        !location ||
+        !contactNumber ||
+        !karateStyle ||
+        !federation ||
+        !position
+      ) {
+        alert("Please fill in all required organizer fields.");
+        setLoading(false);
+        return;
+      }
+
+      if (!orgCertificate) {
+        alert("Please upload your organization certificate.");
         setLoading(false);
         return;
       }
     }
 
-    // 🔥 CREATE USER
+    // 🔥 CREATE AUTH USER
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -82,7 +103,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // 🔥 GET USER
     let user = data.user;
 
     if (!user) {
@@ -96,7 +116,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // 🔥 UPLOAD CERTIFICATE (NEW)
+    // 🔥 PLAYER CERTIFICATE UPLOAD
     let certificatePath = null;
 
     if (role === "player" && certificate) {
@@ -108,16 +128,37 @@ export default function RegisterPage() {
         .upload(filePath, certificate, { upsert: true });
 
       if (uploadError) {
-        console.error("UPLOAD ERROR FULL:", uploadError);
+        console.error("UPLOAD ERROR:", uploadError.message);
         alert(uploadError.message);
         setLoading(false);
         return;
       }
 
-      certificatePath = filePath; // 🔥 STORE PATH ONLY (PRIVATE BUCKET)
+      certificatePath = filePath;
     }
 
-    // 🔥 SAVE PROFILE
+    // 🔥 ORGANIZER CERTIFICATE UPLOAD
+    let orgCertificatePath = null;
+
+    if (role === "organizer" && orgCertificate) {
+      const fileExt = orgCertificate.name.split(".").pop();
+      const filePath = `${user.id}/org-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("certificates")
+        .upload(filePath, orgCertificate, { upsert: true });
+
+      if (uploadError) {
+        console.error("ORG UPLOAD ERROR:", uploadError.message);
+        alert(uploadError.message);
+        setLoading(false);
+        return;
+      }
+
+      orgCertificatePath = filePath;
+    }
+
+    // 🔥 SAVE PLAYER PROFILE
     if (role === "player") {
       const { error: profileError } = await (supabase as any)
         .from("profiles")
@@ -126,10 +167,9 @@ export default function RegisterPage() {
           full_name: fullName,
           dojo,
           belt_rank: beltRank,
-          category,
           dob,
           instructor,
-          certificate_url: certificatePath, // 🔥 NEW
+          certificate_url: certificatePath,
           role: "player",
           status: "pending",
         });
@@ -137,9 +177,12 @@ export default function RegisterPage() {
       if (profileError) {
         console.error("PROFILE ERROR:", profileError.message);
         alert("Failed to save player profile");
+        setLoading(false);
+        return;
       }
     }
 
+    // 🔥 SAVE ORGANIZER PROFILE
     if (role === "organizer") {
       const { error: orgError } = await (supabase as any)
         .from("profiles")
@@ -147,13 +190,17 @@ export default function RegisterPage() {
           id: user.id,
           full_name: orgName,
           dojo: location,
+          instructor: position,
+          certificate_url: orgCertificatePath,
           role: "organizer",
-          status: "verified",
+          status: "pending",
         });
 
       if (orgError) {
         console.error("ORG ERROR:", orgError.message);
         alert("Failed to save organizer profile");
+        setLoading(false);
+        return;
       }
     }
 
@@ -168,93 +215,190 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
-
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-md border">
+        
         <h1 className="text-2xl font-bold text-gray-800 text-center">
           Create Account
         </h1>
 
         <p className="text-center text-sm text-gray-500 mt-1 mb-6">
           Registering as a{" "}
-          <span className="font-bold text-red-600 capitalize">{role}</span>
+          <span className="font-bold text-red-600 capitalize">
+            {role}
+          </span>
         </p>
 
         <form onSubmit={handleSignUp} className="flex flex-col gap-4">
 
-          <input type="email" placeholder="Email" value={email}
+          {/* COMMON */}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={inputStyle} required />
+            className={inputStyle}
+            required
+          />
 
-          <input type="password" placeholder="Password" value={password}
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={inputStyle} required />
+            className={inputStyle}
+            required
+          />
 
+          {/* PLAYER FORM */}
           {role === "player" && (
             <>
-              <input placeholder="Full Name" value={fullName}
+              <input
+                placeholder="Full Name"
+                value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className={inputStyle} required />
+                className={inputStyle}
+                required
+              />
 
-              <input placeholder="Dojo / Club" value={dojo}
+              <input
+                placeholder="Dojo / Club"
+                value={dojo}
                 onChange={(e) => setDojo(e.target.value)}
-                className={inputStyle} />
+                className={inputStyle}
+              />
 
-              <input type="date" value={dob}
+              <input
+                type="date"
+                value={dob}
                 onChange={(e) => setDob(e.target.value)}
-                className={inputStyle} required />
+                className={inputStyle}
+                required
+              />
 
-              <input placeholder="Instructor" value={instructor}
+              <input
+                placeholder="Instructor"
+                value={instructor}
                 onChange={(e) => setInstructor(e.target.value)}
-                className={inputStyle} required />
+                className={inputStyle}
+                required
+              />
 
-              <select value={beltRank}
+              <select
+                value={beltRank}
                 onChange={(e) => setBeltRank(e.target.value)}
-                className={inputStyle} required>
+                className={inputStyle}
+                required
+              >
                 <option value="">Belt Rank</option>
                 <option>White</option>
                 <option>Yellow</option>
                 <option>Green</option>
                 <option>Blue</option>
+                <option>Purple</option>
                 <option>Brown</option>
                 <option>Black</option>
-              </select>
-
-              <select value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={inputStyle} required>
-                <option value="">Category</option>
-                <option>Kata</option>
-                <option>Kumite</option>
-                <option>Both</option>
               </select>
 
               <input
                 type="file"
                 accept="image/*,.pdf"
-                onChange={(e) => setCertificate(e.target.files?.[0] || null)}
-                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setCertificate(e.target.files?.[0] || null)
+                }
+                className="w-full border border-gray-300 p-3 rounded-xl bg-white text-gray-700"
                 required
               />
             </>
           )}
 
+          {/* ORGANIZER FORM */}
           {role === "organizer" && (
             <>
-              <input placeholder="Organization Name" value={orgName}
+              <input
+                placeholder="Organization / Dojo Name"
+                value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
-                className={inputStyle} required />
+                className={inputStyle}
+                required
+              />
 
-              <input placeholder="Location" value={location}
+              <input
+                placeholder="Contact Number"
+                value={contactNumber}
+                onChange={(e) => setContactNumber(e.target.value)}
+                className={inputStyle}
+                required
+              />
+
+              <input
+                placeholder="Location / City"
+                value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className={inputStyle} />
+                className={inputStyle}
+                required
+              />
+
+              <select
+                value={karateStyle}
+                onChange={(e) => setKarateStyle(e.target.value)}
+                className={inputStyle}
+                required
+              >
+                <option value="">Karate Style</option>
+                <option>Shorin-Ryu</option>
+                <option>Goju-Ryu</option>
+                <option>Shotokan</option>
+                <option>Shito-Ryu</option>
+                <option>Wado-Ryu</option>
+                <option>Others</option>
+              </select>
+
+              <select
+                value={federation}
+                onChange={(e) => setFederation(e.target.value)}
+                className={inputStyle}
+                required
+              >
+                <option value="">Federation / Association</option>
+                <option>OSSA</option>
+                <option>PKF</option>
+                <option>Independent</option>
+              </select>
+
+              <input
+                placeholder="Role / Position"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className={inputStyle}
+                required
+              />
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Upload Organization Certificate
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) =>
+                    setOrgCertificate(e.target.files?.[0] || null)
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-xl bg-white text-gray-700"
+                  required
+                />
+              </div>
             </>
           )}
 
-          <button type="submit" disabled={loading}
-            className="mt-2 w-full bg-red-600 text-white font-semibold py-4 rounded-xl hover:bg-red-700 transition">
+          {/* SUBMIT */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-2 w-full bg-red-600 text-white font-semibold py-4 rounded-xl hover:bg-red-700 transition"
+          >
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
 
