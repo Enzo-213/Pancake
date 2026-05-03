@@ -13,7 +13,10 @@ export default function EditProfilePage() {
   const [fullName, setFullName] = useState("");
   const [dojo, setDojo] = useState("");
   const [belt, setBelt] = useState("");
+<<<<<<< HEAD
   const [category, setCategory] = useState("");
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
   const [dob, setDob] = useState("");
   const [instructor, setInstructor] = useState("");
   const [status, setStatus] = useState("pending");
@@ -45,7 +48,10 @@ export default function EditProfilePage() {
       setFullName(data.full_name || "");
       setDojo(data.dojo || "");
       setBelt(data.belt_rank || "");
+<<<<<<< HEAD
       setCategory(data.category || "");
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
       setDob(data.dob || "");
       setInstructor(data.instructor || "");
       setStatus(data.status || "pending");
@@ -73,7 +79,10 @@ export default function EditProfilePage() {
         full_name: fullName,
         dojo,
         belt_rank: belt,
+<<<<<<< HEAD
         category,
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
         dob,
         instructor,
       })
@@ -138,6 +147,7 @@ export default function EditProfilePage() {
             </select>
           </div>
 
+<<<<<<< HEAD
           <div>
             <label className={labelStyle}>Category</label>
             <select
@@ -152,6 +162,8 @@ export default function EditProfilePage() {
             </select>
           </div>
 
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
           <div>
             <label className={labelStyle}>Date of Birth</label>
             <input

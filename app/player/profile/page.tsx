@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 // 🔥 Your stats (kept)
@@ -31,6 +32,7 @@ type Profile = {
 
 export default function PlayerProfilePage() {
   const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
@@ -55,7 +57,10 @@ export default function PlayerProfilePage() {
 
       setProfile(data);
 
+<<<<<<< HEAD
       // 🔥 Generate signed URL for certificate
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
       if (data?.certificate_url) {
         const { data: signedData, error: signedError } =
           await supabase.storage
@@ -71,23 +76,33 @@ export default function PlayerProfilePage() {
     };
 
     fetchProfile();
-  }, []);
+  }, [supabase]);
+
+  // 🔥 Log Out Function
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Error signing out:", error.message);
+    router.push("/login");
+  };
 
   if (!profile) {
     return <p className="p-6">Loading profile...</p>;
   }
 
   const playerName = profile.full_name || "New Player";
+<<<<<<< HEAD
   const dojo = profile.dojo || "Independent";
   const belt = profile.belt_rank || "Not Set";
   const dob = profile.dob || "Not Set";
   const instructor = profile.instructor || "Not Set";
   const status = profile.status || "pending";
 
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
   const statusColor =
-    status === "verified"
+    profile.status === "verified"
       ? "text-green-600"
-      : status === "rejected"
+      : profile.status === "rejected"
       ? "text-red-600"
       : "text-yellow-600";
 
@@ -97,15 +112,37 @@ export default function PlayerProfilePage() {
       {/* HEADER */}
       <header className="border-b border-gray-100 p-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">
-            Player <span className="text-red-600">Profile</span>
-          </h1>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">
+              Player <span className="text-red-600">Profile</span>
+            </h1>
+            {/* ✅ Added Back to Dashboard Link */}
+            <Link 
+              href="/event_browsing" 
+              className="text-xs font-semibold text-red-600 hover:text-red-800 flex items-center gap-1 mt-1 transition-colors"
+            >
+              ← Back to Dashboard 
+            </Link>
+          </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Welcome,</span>
-            <span className="font-semibold text-gray-800">{playerName}</span>
+            {/* Wrapper for Welcome Text and Sign Out */}
+            <div className="flex flex-col items-end">
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-gray-500">Welcome,</span>
+                <span className="font-semibold text-gray-800">{playerName}</span>
+              </div>
+              
+              {/* ✅ Added Sign Out Link below name */}
+              <button 
+                onClick={handleSignOut}
+                className="text-[10px] font-bold text-red-600 underline hover:text-red-800 transition-colors uppercase tracking-widest cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
 
-            <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xl">
+            <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
               {playerName.charAt(0)}
             </div>
           </div>
@@ -124,40 +161,47 @@ export default function PlayerProfilePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Dojo</p>
-              <p className="font-semibold">{dojo}</p>
+              <p className="font-semibold">{profile.dojo || "Independent"}</p>
             </div>
 
             <div>
               <p className="text-gray-500">Belt Rank</p>
+<<<<<<< HEAD
               <p className="font-semibold">{belt}</p>
+=======
+              <p className="font-semibold">{profile.belt_rank || "Not Set"}</p>
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
             </div>
 
             <div>
               <p className="text-gray-500">Date of Birth</p>
-              <p className="font-semibold">{dob}</p>
+              <p className="font-semibold">{profile.dob || "Not Set"}</p>
             </div>
 
             <div>
               <p className="text-gray-500">Instructor</p>
-              <p className="font-semibold">{instructor}</p>
+              <p className="font-semibold">{profile.instructor || "Not Set"}</p>
             </div>
 
             <div>
               <p className="text-gray-500">Status</p>
               <p className={`font-semibold ${statusColor}`}>
-                {status.toUpperCase()}
+                {profile.status.toUpperCase()}
               </p>
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* CERTIFICATE */}
+=======
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
           {certificateUrl && (
             <div className="mt-4">
               <p className="text-gray-500 text-sm mb-1">Certificate</p>
-
               <a
                 href={certificateUrl}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 underline"
               >
                 View Certificate
@@ -165,6 +209,7 @@ export default function PlayerProfilePage() {
             </div>
           )}
 
+<<<<<<< HEAD
           {/* 🔥 EDIT BUTTON */}
           <div className="mt-6">
             <Link
@@ -174,6 +219,16 @@ export default function PlayerProfilePage() {
               Edit Profile
             </Link>
           </div>
+=======
+        <div className="mt-6">
+          <Link
+            href="/player/profile/edit"
+            className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
+          >
+            Edit Profile
+          </Link>
+        </div>
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
         </section>
 
         {/* STATS */}
@@ -207,7 +262,7 @@ export default function PlayerProfilePage() {
             </h2>
 
             <Link
-              href="/player/events"
+              href="/event_browsing"
               className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline"
             >
               View All Events
@@ -218,7 +273,7 @@ export default function PlayerProfilePage() {
             {upcomingMatches.map((match) => (
               <div
                 key={match.event}
-                className="bg-gray-50 p-6 rounded-2xl border flex justify-between shadow-sm"
+                className="bg-gray-50 p-6 rounded-2xl border flex justify-between items-center shadow-sm"
               >
                 <div>
                   <p className="font-semibold">{match.event}</p>
@@ -226,7 +281,7 @@ export default function PlayerProfilePage() {
                     {match.date} • {match.time}
                   </p>
                 </div>
-                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm">
+                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-red-700 transition-colors">
                   View Details
                 </button>
               </div>
@@ -237,4 +292,8 @@ export default function PlayerProfilePage() {
       </div>
     </main>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
