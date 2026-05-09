@@ -163,7 +163,7 @@ export default function RegisterPage() {
     if (role === "organizer") {
       router.push("/organizer/profile");
     } else {
-      router.push("/player/profile");
+      router.push("/event_browsing");
     }
 
     setLoading(false);
