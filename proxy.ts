@@ -1,5 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "./lib/supabase/server-client";
+
+const PROTECTED_ROUTE_PREFIXES = ["/protected"];
+
+function isProtectedRoute(pathname: string) {
+  return PROTECTED_ROUTE_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
+}
 /**
  * Next.js proxy (formerly middleware) entry point responsible for basic auth gating.
  *
@@ -15,20 +23,34 @@ import { createSupabaseServerClient } from "./lib/supabase/server-client";
  * Add extra path checks or redirects here when you need more complex routing rules.
  */
 export async function proxy(request: NextRequest) {
+  if (!isProtectedRoute(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  console.log ({ user });
 
-  // Redirect non-authenticated users away from protected routes
-  if (!user && request.nextUrl.pathname.startsWith("/protected")) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  } catch {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+
   return response;
 }
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};

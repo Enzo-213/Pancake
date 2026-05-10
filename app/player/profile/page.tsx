@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
-// 🔥 Your stats (kept)
 const playerStats = [
   { label: "Matches Played", value: "24" },
   { label: "Win Rate", value: "72%" },
@@ -13,7 +12,6 @@ const playerStats = [
   { label: "Team Ranking", value: "#12" },
 ];
 
-// 🔥 Your events (kept)
 const upcomingMatches = [
   { event: "City Sports Open - Round 1", date: "Oct 15, 2026", time: "6:00 PM" },
   { event: "Weekly Local Scrimmage", date: "Oct 18, 2026", time: "5:30 PM" },
@@ -44,7 +42,7 @@ export default function PlayerProfilePage() {
 
       if (!user) return;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
@@ -55,17 +53,12 @@ export default function PlayerProfilePage() {
         return;
       }
 
-      setProfile(data);
+      setProfile(data as unknown as Profile);
 
-<<<<<<< HEAD
-      // 🔥 Generate signed URL for certificate
-=======
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
       if (data?.certificate_url) {
-        const { data: signedData, error: signedError } =
-          await supabase.storage
-            .from("certificates")
-            .createSignedUrl(data.certificate_url, 60);
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from("certificates")
+          .createSignedUrl(data.certificate_url, 60);
 
         if (signedError) {
           console.error("SIGNED URL ERROR:", signedError.message);
@@ -78,7 +71,6 @@ export default function PlayerProfilePage() {
     fetchProfile();
   }, [supabase]);
 
-  // 🔥 Log Out Function
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error signing out:", error.message);
@@ -90,75 +82,58 @@ export default function PlayerProfilePage() {
   }
 
   const playerName = profile.full_name || "New Player";
-<<<<<<< HEAD
-  const dojo = profile.dojo || "Independent";
-  const belt = profile.belt_rank || "Not Set";
-  const dob = profile.dob || "Not Set";
-  const instructor = profile.instructor || "Not Set";
-  const status = profile.status || "pending";
-
-=======
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
   const statusColor =
     profile.status === "verified"
       ? "text-green-600"
       : profile.status === "rejected"
-      ? "text-red-600"
-      : "text-yellow-600";
+        ? "text-red-600"
+        : "text-yellow-600";
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 font-sans">
-
-      {/* HEADER */}
+    <main className="min-h-screen bg-white font-sans text-gray-900">
       <header className="border-b border-gray-100 p-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">
               Player <span className="text-red-600">Profile</span>
             </h1>
-            {/* ✅ Added Back to Dashboard Link */}
-            <Link 
-              href="/event_browsing" 
-              className="text-xs font-semibold text-red-600 hover:text-red-800 flex items-center gap-1 mt-1 transition-colors"
+            <Link
+              href="/event_browsing"
+              className="mt-1 flex items-center gap-1 text-xs font-semibold text-red-600 transition-colors hover:text-red-800"
             >
-              ← Back to Dashboard 
+              Back to Dashboard
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Wrapper for Welcome Text and Sign Out */}
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-1">
                 <span className="text-sm text-gray-500">Welcome,</span>
                 <span className="font-semibold text-gray-800">{playerName}</span>
               </div>
-              
-              {/* ✅ Added Sign Out Link below name */}
-              <button 
+
+              <button
                 onClick={handleSignOut}
-                className="text-[10px] font-bold text-red-600 underline hover:text-red-800 transition-colors uppercase tracking-widest cursor-pointer"
+                className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-red-600 underline transition-colors hover:text-red-800"
               >
                 Sign Out
               </button>
             </div>
 
-            <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-xl font-bold text-white shadow-sm">
               {playerName.charAt(0)}
             </div>
           </div>
         </div>
       </header>
 
-      {/* MAIN */}
-      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
-
-        {/* PROFILE */}
-        <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Karate Profile 🥋
+      <div className="mx-auto max-w-7xl space-y-10 p-6 md:p-10">
+        <section className="rounded-2xl border border-gray-100 bg-gray-50 p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-gray-900">
+            Karate Profile
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-3">
             <div>
               <p className="text-gray-500">Dojo</p>
               <p className="font-semibold">{profile.dojo || "Independent"}</p>
@@ -166,11 +141,7 @@ export default function PlayerProfilePage() {
 
             <div>
               <p className="text-gray-500">Belt Rank</p>
-<<<<<<< HEAD
-              <p className="font-semibold">{belt}</p>
-=======
               <p className="font-semibold">{profile.belt_rank || "Not Set"}</p>
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
             </div>
 
             <div>
@@ -191,13 +162,9 @@ export default function PlayerProfilePage() {
             </div>
           </div>
 
-<<<<<<< HEAD
-          {/* CERTIFICATE */}
-=======
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
           {certificateUrl && (
             <div className="mt-4">
-              <p className="text-gray-500 text-sm mb-1">Certificate</p>
+              <p className="mb-1 text-sm text-gray-500">Certificate</p>
               <a
                 href={certificateUrl}
                 target="_blank"
@@ -209,44 +176,29 @@ export default function PlayerProfilePage() {
             </div>
           )}
 
-<<<<<<< HEAD
-          {/* 🔥 EDIT BUTTON */}
           <div className="mt-6">
             <Link
               href="/player/profile/edit"
-              className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
+              className="inline-block rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
             >
               Edit Profile
             </Link>
           </div>
-=======
-        <div className="mt-6">
-          <Link
-            href="/player/profile/edit"
-            className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
-          >
-            Edit Profile
-          </Link>
-        </div>
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
         </section>
 
-        {/* STATS */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-6">
+          <h2 className="mb-6 text-xl font-bold text-gray-900">
             Key Performance
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {playerStats.map((stat) => (
               <div
                 key={stat.label}
-                className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm"
+                className="rounded-2xl border border-gray-100 bg-gray-50 p-6 shadow-sm"
               >
-                <p className="text-sm font-medium text-gray-500">
-                  {stat.label}
-                </p>
-                <p className="text-4xl font-extrabold text-gray-950 mt-1">
+                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                <p className="mt-1 text-4xl font-extrabold text-gray-950">
                   {stat.value}
                 </p>
               </div>
@@ -254,16 +206,13 @@ export default function PlayerProfilePage() {
           </div>
         </section>
 
-        {/* EVENTS */}
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
-              Upcoming Events
-            </h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
 
             <Link
               href="/event_browsing"
-              className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline"
+              className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline"
             >
               View All Events
             </Link>
@@ -273,7 +222,7 @@ export default function PlayerProfilePage() {
             {upcomingMatches.map((match) => (
               <div
                 key={match.event}
-                className="bg-gray-50 p-6 rounded-2xl border flex justify-between items-center shadow-sm"
+                className="flex items-center justify-between rounded-2xl border bg-gray-50 p-6 shadow-sm"
               >
                 <div>
                   <p className="font-semibold">{match.event}</p>
@@ -281,19 +230,14 @@ export default function PlayerProfilePage() {
                     {match.date} • {match.time}
                   </p>
                 </div>
-                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-red-700 transition-colors">
+                <button className="rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700">
                   View Details
                 </button>
               </div>
             ))}
           </div>
         </section>
-
       </div>
     </main>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
