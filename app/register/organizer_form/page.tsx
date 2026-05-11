@@ -104,14 +104,13 @@ export default function OrganizerRegisterPage() {
       .from("organizer_profiles")
       .upsert({
         id: user.id,
-        full_name: orgName, // We use org name as full_name for organizers
-        dojo: location,
-        instructor: position,
+        organization_name: orgName, // We use org name as full_name for organizers
+        location,
         contact_number: contactNumber,
         karate_style: karateStyle,
         federation,
-        certificate_url: orgCertificatePath,
-        role: "organizer",
+        position,
+        organization_certificate: orgCertificatePath,
         status: "pending",
       });
 
