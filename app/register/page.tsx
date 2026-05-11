@@ -14,7 +14,7 @@ export default function RegisterChoicePage() {
         
         {/* Player Card */}
         <Link 
-          href="/register/form?role=player"
+          href="/register/player_form"
           className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
         >
           <span className="text-3xl font-bold text-red-600 group-hover:text-red-700">
@@ -25,7 +25,7 @@ export default function RegisterChoicePage() {
 
         {/* Organizer Card */}
         <Link 
-          href="/register/form?role=organizer"
+          href="/register/organizer_form"
           className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
         >
           <span className="text-3xl font-bold text-red-600 group-hover:text-red-700">

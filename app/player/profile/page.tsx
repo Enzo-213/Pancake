@@ -57,10 +57,6 @@ export default function PlayerProfilePage() {
 
       setProfile(data);
 
-<<<<<<< HEAD
-      // 🔥 Generate signed URL for certificate
-=======
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
       if (data?.certificate_url) {
         const { data: signedData, error: signedError } =
           await supabase.storage
@@ -90,15 +86,6 @@ export default function PlayerProfilePage() {
   }
 
   const playerName = profile.full_name || "New Player";
-<<<<<<< HEAD
-  const dojo = profile.dojo || "Independent";
-  const belt = profile.belt_rank || "Not Set";
-  const dob = profile.dob || "Not Set";
-  const instructor = profile.instructor || "Not Set";
-  const status = profile.status || "pending";
-
-=======
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
   const statusColor =
     profile.status === "verified"
       ? "text-green-600"
@@ -166,11 +153,7 @@ export default function PlayerProfilePage() {
 
             <div>
               <p className="text-gray-500">Belt Rank</p>
-<<<<<<< HEAD
-              <p className="font-semibold">{belt}</p>
-=======
               <p className="font-semibold">{profile.belt_rank || "Not Set"}</p>
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
             </div>
 
             <div>
@@ -191,10 +174,6 @@ export default function PlayerProfilePage() {
             </div>
           </div>
 
-<<<<<<< HEAD
-          {/* CERTIFICATE */}
-=======
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
           {certificateUrl && (
             <div className="mt-4">
               <p className="text-gray-500 text-sm mb-1">Certificate</p>
@@ -209,17 +188,6 @@ export default function PlayerProfilePage() {
             </div>
           )}
 
-<<<<<<< HEAD
-          {/* 🔥 EDIT BUTTON */}
-          <div className="mt-6">
-            <Link
-              href="/player/profile/edit"
-              className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
-            >
-              Edit Profile
-            </Link>
-          </div>
-=======
         <div className="mt-6">
           <Link
             href="/player/profile/edit"
@@ -228,7 +196,6 @@ export default function PlayerProfilePage() {
             Edit Profile
           </Link>
         </div>
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
         </section>
 
         {/* STATS */}
@@ -292,8 +259,4 @@ export default function PlayerProfilePage() {
       </div>
     </main>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> f9be7749da750038dfcb663043e6ea302587afb0
