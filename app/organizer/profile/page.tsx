@@ -196,7 +196,7 @@ export default function PlayerProfilePage() {
 
         <div className="mt-6">
           <Link
-            href="/player/profile/edit"
+            href="/organizer/profile/edit"
             className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
           >
             Edit Profile
