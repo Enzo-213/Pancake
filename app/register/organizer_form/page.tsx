@@ -13,6 +13,7 @@ export default function OrganizerRegisterPage() {
   const [password, setPassword] = useState("");
 
   // ORGANIZER STATES
+  const [username, setUsername] = useState("");
   const [orgName, setOrgName] = useState("");
   const [location, setLocation] = useState("");
   const [contactNumber, setContactNumber] = useState("");
@@ -34,6 +35,7 @@ export default function OrganizerRegisterPage() {
     if (
       !email ||
       !password ||
+      !username ||
       !orgName ||
       !location ||
       !contactNumber ||
@@ -104,6 +106,7 @@ export default function OrganizerRegisterPage() {
       .from("organizer_profiles")
       .upsert({
         id: user.id,
+        username,
         organization_name: orgName, // We use org name as full_name for organizers
         location,
         contact_number: contactNumber,
@@ -161,6 +164,14 @@ export default function OrganizerRegisterPage() {
             className={inputStyle}
             required
           />
+
+          <input 
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={inputStyle}
+            required
+          /> 
 
           {/* ORGANIZATION DETAILS */}
           <input

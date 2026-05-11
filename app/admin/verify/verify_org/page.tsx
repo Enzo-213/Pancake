@@ -8,7 +8,7 @@ type VerificationStatus = "pending" | "verified" | "rejected";
 
 type PlayerVerification = {
   id: string;
-  name: string;
+  orgName: string;
   dojo: string;
   beltRank: string;
   instructor: string;
