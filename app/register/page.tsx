@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Montserrat } from "next/font/google";
 
-// Initialize the Montserrat font for that geometric, athletic aesthetic
 const montserrat = Montserrat({ 
   subsets: ["latin"],
   weight: ["400", "500", "700", "800", "900"],
@@ -27,21 +26,15 @@ export default function RegisterChoicePage() {
         </p>
       </div>
 
-      {/* Cards Container */}
+      {/* Cards */}
       <div className="flex flex-col md:flex-row gap-6 w-full max-w-2xl justify-center z-10">
         
-        {/* Player Card */}
+        {/* Player */}
         <Link 
-<<<<<<< HEAD
-          href="/register/form?role=player"
+          href="/register/player_form"
           className="flex flex-col bg-cover bg-center p-8 w-full md:w-64 rounded-2xl border-2 border-red-600 shadow-xl hover:scale-105 transition-transform"
           style={{ backgroundImage: "url('/images/player-bg.png')", backgroundColor: "#111111" }}
-=======
-          href="/register/player_form"
-          className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
->>>>>>> a50d3657dca9c927e174bce45360fb49bd86017b
         >
-          {/* Taekwondo Uniform (Gi) Icon */}
           <div className="mb-6 h-16 w-16 relative">
             <Image 
               src="/images/gi-icon.png" 
@@ -50,26 +43,22 @@ export default function RegisterChoicePage() {
               className="object-contain" 
             />
           </div>
+
           <span className="text-xl font-extrabold text-white uppercase tracking-wide mb-2">
             Player
           </span>
+
           <p className="text-gray-300 text-xs font-medium leading-relaxed">
             Compete in tournament and<br /> track your ranking
           </p>
         </Link>
 
-        {/* Organizer Card */}
+        {/* Organizer */}
         <Link 
-<<<<<<< HEAD
-          href="/register/form?role=organizer"
+          href="/register/organizer_form"
           className="flex flex-col bg-cover bg-center p-8 w-full md:w-64 rounded-2xl border-2 border-transparent shadow-xl hover:scale-105 hover:border-gray-700 transition-all"
           style={{ backgroundImage: "url('/images/organizer-bg.png')", backgroundColor: "#111111" }}
-=======
-          href="/register/organizer_form"
-          className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
->>>>>>> a50d3657dca9c927e174bce45360fb49bd86017b
         >
-          {/* Trophy Icon */}
           <div className="mb-6 h-16 w-16 relative">
             <Image 
               src="/images/trophy-icon.png" 
@@ -78,17 +67,19 @@ export default function RegisterChoicePage() {
               className="object-contain" 
             />
           </div>
+
           <span className="text-xl font-extrabold text-white uppercase tracking-wide mb-2">
             Organizer
           </span>
+
           <p className="text-gray-300 text-xs font-medium leading-relaxed">
-            Compete in tournament and<br /> track your ranking
+            Create and manage tournaments<br /> and events
           </p>
         </Link>
 
       </div>
 
-      {/* Bottom Branding / Footer */}
+      {/* Footer */}
       <div className="mt-16 text-center flex flex-col items-center">
         <h2 
           className="text-4xl md:text-5xl font-black italic text-white uppercase tracking-wide mb-3"
@@ -98,6 +89,7 @@ export default function RegisterChoicePage() {
         >
           Enter The Arena
         </h2>
+
         <p className="text-gray-900 font-extrabold italic text-sm md:text-base tracking-wide">
           Compete. Rise. Dominate.
         </p>

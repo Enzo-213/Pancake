@@ -11,8 +11,9 @@ export default function OrganizerRegisterPage() {
   // AUTH STATES
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // UI Addition for validation
 
-  // ORGANIZER STATES
+  // ORGANIZER STATES (All original states preserved)
   const [username, setUsername] = useState("");
   const [orgName, setOrgName] = useState("");
   const [dob, setDob] = useState("");
@@ -24,26 +25,27 @@ export default function OrganizerRegisterPage() {
   const [orgCertificate, setOrgCertificate] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const inputStyle =
-    "w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-900";
+  // Updated styles to match UI image
+  const inputWrapperStyle = "relative flex items-center w-full";
+  const inputStyle = "w-full px-4 py-3 pl-12 rounded-lg border border-gray-200 bg-[#f4f4f4] text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 transition-all";
+  const labelStyle = "text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1";
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // VALIDATION
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    // ORIGINAL VALIDATION LOGIC
     if (
-      !email ||
-      !password ||
-      !username ||
-      !dob ||
-      !orgName ||
-      !location ||
-      !contactNumber ||
-      !karateStyle ||
-      !federation ||
-      !position
+      !email || !password || !username || !dob || !orgName || 
+      !location || !contactNumber || !karateStyle || !federation || !position
     ) {
       alert("Please fill in all required organizer fields.");
       setLoading(false);
@@ -95,7 +97,6 @@ export default function OrganizerRegisterPage() {
         .upload(filePath, orgCertificate, { upsert: true });
 
       if (uploadError) {
-        console.error("ORG UPLOAD ERROR:", uploadError.message);
         alert(uploadError.message);
         setLoading(false);
         return;
@@ -110,7 +111,7 @@ export default function OrganizerRegisterPage() {
         id: user.id,
         username,
         dob, 
-        organization_name: orgName, // We use org name as full_name for organizers
+        organization_name: orgName,
         location,
         contact_number: contactNumber,
         karate_style: karateStyle,
@@ -121,7 +122,6 @@ export default function OrganizerRegisterPage() {
       });
 
     if (orgError) {
-      console.error("ORG ERROR:", orgError.message);
       alert("Failed to save organizer profile");
       setLoading(false);
       return;
@@ -133,140 +133,137 @@ export default function OrganizerRegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-md border">
+    <main 
+      className="flex min-h-screen items-center justify-center bg-cover bg-center p-4"
+      style={{ backgroundImage: `url('/images/bg-arena.png')` }} // Use your background asset
+    >
+      <div className="w-full max-w-[450px] bg-white p-8 rounded-2xl shadow-2xl overflow-y-auto max-h-[95vh]">
         
-        <h1 className="text-2xl font-bold text-gray-800 text-center">
-          Organizer Portal
-        </h1>
-
-        <p className="text-center text-sm text-gray-500 mt-1 mb-6">
-          Registering as an{" "}
-          <span className="font-bold text-red-600 capitalize">
-            Organizer
-          </span>
-        </p>
+        <div className="text-center mb-6">
+          <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase">
+            Create Organizer Account
+          </h1>
+          <p className="text-xs text-gray-500 mt-1">
+            Sign up to manage and host tournaments
+          </p>
+        </div>
 
         <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+          
+          {/* Section: Basic Info */}
+          <div className="flex flex-col gap-3">
+            <div className={inputWrapperStyle}>
+              <img src="/images/org.png" className="absolute left-4 w-5 opacity-60" alt="" />
+              <input 
+                placeholder="Organization / Dojo Name" 
+                value={orgName} 
+                onChange={(e) => setOrgName(e.target.value)} 
+                className={inputStyle} required 
+              />
+            </div>
 
-          {/* CREDENTIALS */}
-          <input
-            type="email"
-            placeholder="Work Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={inputStyle}
-            required
-          />
+            <div className={inputWrapperStyle}>
+              <img src="/images/user.png" className="absolute left-4 w-5 opacity-60" alt="" />
+              <input 
+                placeholder="Full Name / Username" 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                className={inputStyle} required 
+              />
+            </div>
+          </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputStyle}
-            required
-          />
+          {/* Section: Credentials */}
+          <div className="flex flex-col gap-3">
+            <div className={inputWrapperStyle}>
+              <img src="/images/email.png" className="absolute left-4 w-5 opacity-60" alt="" />
+              <input 
+                type="email" placeholder="Work Email" 
+                value={email} onChange={(e) => setEmail(e.target.value)} 
+                className={inputStyle} required 
+              />
+            </div>
 
-          <input 
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className={inputStyle}
-            required
-          /> 
+            <div className={inputWrapperStyle}>
+              <img src="/images/lock.png" className="absolute left-4 w-5 opacity-60" alt="" />
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Password" 
+                value={password} onChange={(e) => setPassword(e.target.value)} 
+                className={inputStyle} required 
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 opacity-40">
+                <img src={showPassword ? "/images/eye.png" : "/images/eye-off.png"} className="w-4" alt="" />
+              </button>
+            </div>
 
-          <input
-            type="date"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            className={inputStyle}
-            required
-          />
+            <div className={inputWrapperStyle}>
+              <img src="/images/lock.png" className="absolute left-4 w-5 opacity-60" alt="" />
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Confirm Password" 
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} 
+                className={inputStyle} required 
+              />
+            </div>
+          </div>
 
-          {/* ORGANIZATION DETAILS */}
-          <input
-            placeholder="Organization / Dojo Name"
-            value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            className={inputStyle}
-            required
-          />
+          {/* Section: Additional Details (Preserved from original code) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col">
+              <label className={labelStyle}>Date of Birth</label>
+              <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={inputStyle.replace('pl-12', 'pl-4')} required />
+            </div>
+            <div className="flex flex-col">
+              <label className={labelStyle}>Contact Number</label>
+              <input placeholder="Contact #" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} className={inputStyle.replace('pl-12', 'pl-4')} required />
+            </div>
+          </div>
 
-          <input
-            placeholder="Contact Number"
-            value={contactNumber}
-            onChange={(e) => setContactNumber(e.target.value)}
-            className={inputStyle}
-            required
-          />
+          <div className={inputWrapperStyle}>
+            <img src="/images/location.png" className="absolute left-4 w-5 opacity-60" alt="" />
+            <input placeholder="Location / City" value={location} onChange={(e) => setLocation(e.target.value)} className={inputStyle} required />
+            <img src="/images/chevron.png" className="absolute right-4 w-3 opacity-30" alt="" />
+          </div>
 
-          <input
-            placeholder="Location / City"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className={inputStyle}
-            required
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <select value={karateStyle} onChange={(e) => setKarateStyle(e.target.value)} className={inputStyle.replace('pl-12', 'pl-4')} required>
+              <option value="">Karate Style</option>
+              <option>Shorin-Ryu</option><option>Goju-Ryu</option><option>Shotokan</option>
+              <option>Shito-Ryu</option><option>Wado-Ryu</option><option>Others</option>
+            </select>
 
-          <select
-            value={karateStyle}
-            onChange={(e) => setKarateStyle(e.target.value)}
-            className={inputStyle}
-            required
-          >
-            <option value="">Karate Style</option>
-            <option>Shorin-Ryu</option>
-            <option>Goju-Ryu</option>
-            <option>Shotokan</option>
-            <option>Shito-Ryu</option>
-            <option>Wado-Ryu</option>
-            <option>Others</option>
-          </select>
+            <select value={federation} onChange={(e) => setFederation(e.target.value)} className={inputStyle.replace('pl-12', 'pl-4')} required>
+              <option value="">Federation</option>
+              <option>OSSA</option><option>PKF</option><option>Independent</option>
+            </select>
+          </div>
 
-          <select
-            value={federation}
-            onChange={(e) => setFederation(e.target.value)}
-            className={inputStyle}
-            required
-          >
-            <option value="">Federation / Association</option>
-            <option>OSSA</option>
-            <option>PKF</option>
-            <option>Independent</option>
-          </select>
+          <input placeholder="Your Role / Position" value={position} onChange={(e) => setPosition(e.target.value)} className={inputStyle.replace('pl-12', 'pl-4')} required />
 
-          <input
-            placeholder="Your Role / Position"
-            value={position}
-            onChange={(e) => setPosition(e.target.value)}
-            className={inputStyle}
-            required
-          />
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-500 px-1">
-              Organization Certificate (Proof of Authority)
-            </label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) =>
-                setOrgCertificate(e.target.files?.[0] || null)
-              }
-              className="w-full border border-gray-300 p-3 rounded-xl bg-white text-gray-700 text-sm"
-              required
+          <div className="bg-[#f4f4f4] p-3 rounded-lg border border-dashed border-gray-300">
+            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Organization Certificate</label>
+            <input 
+              type="file" accept="image/*,.pdf" 
+              onChange={(e) => setOrgCertificate(e.target.files?.[0] || null)} 
+              className="text-xs text-gray-600 w-full" required 
             />
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 w-full bg-red-600 text-white font-semibold py-4 rounded-xl hover:bg-red-700 transition disabled:opacity-50"
+            type="submit" disabled={loading}
+            className="mt-2 w-full bg-[#c1272d] text-white font-bold py-4 rounded-xl hover:bg-red-700 transition shadow-lg active:scale-95 disabled:opacity-50"
           >
-            {loading ? "Processing..." : "Submit for Verification"}
+            {loading ? "Processing..." : "Sign Up"}
           </button>
 
+          <p className="text-center text-xs text-gray-600">
+            Already have an account? <span className="text-[#c1272d] font-bold cursor-pointer hover:underline">Log in</span>
+          </p>
+
+          <div className="text-[10px] text-center text-gray-400 mt-2 leading-tight px-4">
+            By signing up you agree to our <span className="font-bold text-gray-600">Terms of Service</span> and <span className="font-bold text-gray-600">Privacy Policy</span>.
+          </div>
         </form>
       </div>
     </main>
