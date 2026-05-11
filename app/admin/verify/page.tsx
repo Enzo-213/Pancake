@@ -116,6 +116,20 @@ export default function AdminVerifyPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10 text-gray-900">
+
+      {/* LOG OUT */}
+  <div className="mb-4">
+    <button
+      onClick={async () => {
+        await supabase.auth.signOut();
+        window.location.href = "/login";
+      }}
+      className="text-red-600 font-semibold hover:underline"
+    >
+      Log out
+    </button>
+  </div>
+
       <div className="mx-auto max-w-6xl space-y-8">
 
         {/* HEADER */}
