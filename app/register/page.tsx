@@ -32,9 +32,14 @@ export default function RegisterChoicePage() {
         
         {/* Player Card */}
         <Link 
+<<<<<<< HEAD
           href="/register/form?role=player"
           className="flex flex-col bg-cover bg-center p-8 w-full md:w-64 rounded-2xl border-2 border-red-600 shadow-xl hover:scale-105 transition-transform"
           style={{ backgroundImage: "url('/images/player-bg.png')", backgroundColor: "#111111" }}
+=======
+          href="/register/player_form"
+          className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
+>>>>>>> a50d3657dca9c927e174bce45360fb49bd86017b
         >
           {/* Taekwondo Uniform (Gi) Icon */}
           <div className="mb-6 h-16 w-16 relative">
@@ -55,9 +60,14 @@ export default function RegisterChoicePage() {
 
         {/* Organizer Card */}
         <Link 
+<<<<<<< HEAD
           href="/register/form?role=organizer"
           className="flex flex-col bg-cover bg-center p-8 w-full md:w-64 rounded-2xl border-2 border-transparent shadow-xl hover:scale-105 hover:border-gray-700 transition-all"
           style={{ backgroundImage: "url('/images/organizer-bg.png')", backgroundColor: "#111111" }}
+=======
+          href="/register/organizer_form"
+          className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
+>>>>>>> a50d3657dca9c927e174bce45360fb49bd86017b
         >
           {/* Trophy Icon */}
           <div className="mb-6 h-16 w-16 relative">

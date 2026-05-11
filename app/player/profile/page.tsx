@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 // --- DATA CONSTANTS ---
@@ -21,9 +22,9 @@ const upcomingMatches = [
 type Profile = {
   id: string;
   full_name: string;
+  age: string,
   dojo: string;
   belt_rank: string;
-  category: string;
   dob: string;
   instructor: string;
   status: string;
@@ -33,8 +34,10 @@ type Profile = {
 
 export default function PlayerProfilePage() {
   const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
   const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,13 +45,10 @@ export default function PlayerProfilePage() {
       const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
 
-      if (!user) {
-        console.log("No user logged in");
-        return;
-      }
+      if (!user) return;
 
       const { data, error } = await (supabase as any)
-        .from("profiles")
+        .from("player_profiles")
         .select("*")
         .eq("id", user.id)
         .single();
@@ -75,9 +75,20 @@ export default function PlayerProfilePage() {
     };
 
     fetchProfile();
-  }, []);
+  }, [supabase]);
+
+  // 🔥 Log Out Function
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Error signing out:", error.message);
+    router.push("/login");
+  };
 
   if (!profile) {
+    return <p className="p-6">Loading profile...</p>;
+  }
+
+  const playerName = profile.full_name || "New Player";
     return (
       <div className="min-h-screen bg-red-600 flex items-center justify-center text-white font-bold">
         Loading profile...
@@ -87,13 +98,54 @@ export default function PlayerProfilePage() {
 
   const currentStatus = profile.status || "pending";
   const statusColor =
+    profile.status === "verified"
     currentStatus === "verified"
       ? "text-green-600"
+      : profile.status === "rejected"
       : currentStatus === "rejected"
       ? "text-red-600"
       : "text-yellow-600";
 
   return (
+    <main className="min-h-screen bg-white text-gray-900 font-sans">
+
+      {/* HEADER */}
+      <header className="border-b border-gray-100 p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">
+              Player <span className="text-red-600">Profile</span>
+            </h1>
+            {/* ✅ Added Back to Dashboard Link */}
+            <Link 
+              href="/event_browsing" 
+              className="text-xs font-semibold text-red-600 hover:text-red-800 flex items-center gap-1 mt-1 transition-colors"
+            >
+              ← Back to Dashboard 
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Wrapper for Welcome Text and Sign Out */}
+            <div className="flex flex-col items-end">
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-gray-500">Welcome,</span>
+                <span className="font-semibold text-gray-800">{playerName}</span>
+              </div>
+              
+              {/* ✅ Added Sign Out Link below name */}
+              <button 
+                onClick={handleSignOut}
+                className="text-[10px] font-bold text-red-600 underline hover:text-red-800 transition-colors uppercase tracking-widest cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+
+            <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
+              {playerName.charAt(0)}
+            </div>
+          </div>
     <main className="relative min-h-screen font-sans">
       
       {/* 🔴 FIXED FULL-SCREEN BACKGROUND */}
@@ -115,6 +167,21 @@ export default function PlayerProfilePage() {
           <h1 className="text-4xl font-extrabold tracking-tight">Player Profile</h1>
           <p className="mt-2 text-white opacity-90 text-lg font-medium">Track your performance and tournaments</p>
         </div>
+      </header>
+
+      {/* MAIN */}
+      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
+
+        {/* PROFILE */}
+        <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Karate Profile 🥋
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500">Dojo</p>
+              <p className="font-semibold">{profile.dojo || "Independent"}</p>
 
         {/* WHITE CONTENT CARD */}
         <div className="bg-white/95 backdrop-blur-sm rounded-[40px] shadow-2xl p-8 md:p-12 space-y-12 border border-white">
@@ -128,6 +195,32 @@ export default function PlayerProfilePage() {
                 alt="Profile" 
               />
             </div>
+
+            <div>
+              <p className="text-gray-500">Belt Rank</p>
+              <p className="font-semibold">{profile.belt_rank || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Date of Birth</p>
+              <p className="font-semibold">{profile.dob || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Instructor</p>
+              <p className="font-semibold">{profile.instructor || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Age</p>
+              <p className="font-semibold">{profile.age || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Status</p>
+              <p className={`font-semibold ${statusColor}`}>
+                {profile.status.toUpperCase()}
+              </p>
             <div className="text-center md:text-left flex-1">
               <h2 className="text-4xl font-black text-zinc-900 leading-tight">
                 {profile.full_name || "New Player"}
@@ -142,6 +235,37 @@ export default function PlayerProfilePage() {
             </div>
           </div>
 
+          {certificateUrl && (
+            <div className="mt-4">
+              <p className="text-gray-500 text-sm mb-1">Certificate</p>
+              <a
+                href={certificateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+              >
+                View Certificate
+              </a>
+            </div>
+          )}
+
+        <div className="mt-6">
+          <Link
+            href="/player/profile/edit"
+            className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
+          >
+            Edit Profile
+          </Link>
+        </div>
+        </section>
+
+        {/* STATS */}
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            Key Performance
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {/* PLAYER STATS GRID */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {playerStats.map((stat) => (
@@ -177,6 +301,20 @@ export default function PlayerProfilePage() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* EVENTS */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">
+              Upcoming Events
+            </h2>
+
+            <Link
+              href="/event_browsing"
+              className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline"
+            >
+              View All Events
 
           {/* CERTIFICATE LINK */}
           {certificateUrl && (
@@ -201,6 +339,18 @@ export default function PlayerProfilePage() {
               View All
             </Link>
           </div>
+
+          <div className="space-y-4">
+            {upcomingMatches.map((match) => (
+              <div
+                key={match.event}
+                className="bg-gray-50 p-6 rounded-2xl border flex justify-between items-center shadow-sm"
+              >
+                <div>
+                  <p className="font-semibold">{match.event}</p>
+                  <p className="text-sm text-gray-500">
+                    {match.date} • {match.time}
+                  </p>
           
           <div className="grid md:grid-cols-2 gap-6">
             {upcomingMatches.map((match, i) => (
@@ -217,6 +367,9 @@ export default function PlayerProfilePage() {
                   <p className="text-sm text-zinc-400 font-medium">Sport: {match.sport}</p>
                   <p className="text-sm text-red-600 font-black mt-2">Starts in {i + 3} days</p>
                 </div>
+                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-red-700 transition-colors">
+                  View Details
+                </button>
               </div>
             ))}
           </div>
