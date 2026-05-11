@@ -45,7 +45,7 @@ export default function PlayerProfilePage() {
       if (!user) return;
 
       const { data, error } = await (supabase as any)
-        .from("profiles")
+        .from("player_profiles")
         .select("*")
         .eq("id", user.id)
         .single();

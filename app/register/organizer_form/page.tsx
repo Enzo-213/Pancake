@@ -101,7 +101,7 @@ export default function OrganizerRegisterPage() {
 
     // 3. SAVE ORGANIZER PROFILE
     const { error: orgError } = await (supabase as any)
-      .from("profiles")
+      .from("organizer_profiles")
       .upsert({
         id: user.id,
         full_name: orgName, // We use org name as full_name for organizers

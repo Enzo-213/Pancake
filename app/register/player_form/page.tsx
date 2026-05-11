@@ -91,16 +91,16 @@ export default function PlayerRegisterPage() {
 
     // 3. SAVE PLAYER PROFILE
     const { error: profileError } = await (supabase as any)
-      .from("profiles")
+      .from("player_profiles")
       .upsert({
         id: user.id,
+        email,
         full_name: fullName,
         dojo,
         belt_rank: beltRank,
         dob,
         instructor,
         certificate_url: certificatePath,
-        role: "player",
         status: "pending",
       });
 

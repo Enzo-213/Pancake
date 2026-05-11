@@ -27,9 +27,8 @@ export default function AdminVerifyPage() {
   useEffect(() => {
     const fetchPlayers = async () => {
       const { data, error } = await (supabase as any)
-        .from("profiles")
+        .from("player_profiles")
         .select("*")
-        .eq("role", "player")
         .eq("status", "pending");
 
       if (error) {
@@ -67,7 +66,7 @@ export default function AdminVerifyPage() {
     nextStatus: Exclude<VerificationStatus, "pending">
   ) => {
     const { error } = await (supabase as any)
-      .from("profiles")
+      .from("player_profiles")
       .update({ status: nextStatus })
       .eq("id", playerId);
 
