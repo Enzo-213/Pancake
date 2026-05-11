@@ -15,7 +15,6 @@ export default function EditProfilePage() {
   const [belt, setBelt] = useState("");
   const [dob, setDob] = useState("");
   const [instructor, setInstructor] = useState("");
-  const [status, setStatus] = useState("pending");
 
   const inputStyle =
     "w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500";
@@ -31,7 +30,7 @@ export default function EditProfilePage() {
       if (!user) return;
 
       const { data, error } = await (supabase as any)
-        .from("profiles")
+        .from("player_profiles")
         .select("*")
         .eq("id", user.id)
         .single();
@@ -46,7 +45,6 @@ export default function EditProfilePage() {
       setBelt(data.belt_rank || "");
       setDob(data.dob || "");
       setInstructor(data.instructor || "");
-      setStatus(data.status || "pending");
     };
 
     fetchProfile();
@@ -66,7 +64,7 @@ export default function EditProfilePage() {
     }
 
     const { error } = await (supabase as any)
-      .from("profiles")
+      .from("player_profiles")
       .update({
         full_name: fullName,
         dojo,
@@ -151,15 +149,6 @@ export default function EditProfilePage() {
               value={instructor}
               onChange={(e) => setInstructor(e.target.value)}
               className={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label className={labelStyle}>Verification Status</label>
-            <input
-              value={status.toUpperCase()}
-              className={`${inputStyle} bg-gray-100 text-gray-500`}
-              readOnly
             />
           </div>
 

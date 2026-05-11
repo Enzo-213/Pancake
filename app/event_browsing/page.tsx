@@ -73,7 +73,7 @@ export default function EventBrowsing() {
 
       // 2. Fetch only the full_name from the profiles table
       const { data, error } = await supabase
-        .from('profiles')
+        .from('player_profiles')
         .select('full_name')
         .eq('id', user.id)
         .single();
