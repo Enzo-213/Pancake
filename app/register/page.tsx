@@ -1,45 +1,97 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { Montserrat } from "next/font/google";
+
+// Initialize the Montserrat font for that geometric, athletic aesthetic
+const montserrat = Montserrat({ 
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "800", "900"],
+  style: ["normal", "italic"]
+});
 
 export default function RegisterChoicePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
-      {/* Top Caption */}
-      <h2 className="text-xl md:text-2xl font-medium text-gray-700 mb-10">
-        I am creating this account as a/an
-      </h2>
+    <main 
+      className={`flex min-h-screen flex-col items-center justify-center bg-cover bg-center p-6 ${montserrat.className}`}
+      style={{ backgroundImage: "url('/images/bg-arena.png')" }}
+    >
+      
+      {/* Top Titles */}
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-black text-black tracking-tight uppercase mb-2">
+          Create Account
+        </h1>
+        <p className="text-gray-500 text-sm md:text-base font-medium">
+          Choose how you want to participate.
+        </p>
+      </div>
 
       {/* Cards Container */}
-      <div className="flex flex-col md:flex-row gap-6 w-full max-w-4xl justify-center">
+      <div className="flex flex-col md:flex-row gap-6 w-full max-w-2xl justify-center z-10">
         
         {/* Player Card */}
         <Link 
           href="/register/form?role=player"
-          className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
+          className="flex flex-col bg-cover bg-center p-8 w-full md:w-64 rounded-2xl border-2 border-red-600 shadow-xl hover:scale-105 transition-transform"
+          style={{ backgroundImage: "url('/images/player-bg.png')", backgroundColor: "#111111" }}
         >
-          <span className="text-3xl font-bold text-red-600 group-hover:text-red-700">
+          {/* Taekwondo Uniform (Gi) Icon */}
+          <div className="mb-6 h-16 w-16 relative">
+            <Image 
+              src="/images/gi-icon.png" 
+              alt="Player Icon" 
+              fill 
+              className="object-contain" 
+            />
+          </div>
+          <span className="text-xl font-extrabold text-white uppercase tracking-wide mb-2">
             Player
           </span>
-          <p className="text-gray-500 mt-2 text-sm">Join games and track your stats</p>
+          <p className="text-gray-300 text-xs font-medium leading-relaxed">
+            Compete in tournament and<br /> track your ranking
+          </p>
         </Link>
 
         {/* Organizer Card */}
         <Link 
           href="/register/form?role=organizer"
-          className="flex-1 bg-gray-100 p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 transition-all group text-center"
+          className="flex flex-col bg-cover bg-center p-8 w-full md:w-64 rounded-2xl border-2 border-transparent shadow-xl hover:scale-105 hover:border-gray-700 transition-all"
+          style={{ backgroundImage: "url('/images/organizer-bg.png')", backgroundColor: "#111111" }}
         >
-          <span className="text-3xl font-bold text-red-600 group-hover:text-red-700">
+          {/* Trophy Icon */}
+          <div className="mb-6 h-16 w-16 relative">
+            <Image 
+              src="/images/trophy-icon.png" 
+              alt="Organizer Trophy" 
+              fill 
+              className="object-contain" 
+            />
+          </div>
+          <span className="text-xl font-extrabold text-white uppercase tracking-wide mb-2">
             Organizer
           </span>
-          <p className="text-gray-500 mt-2 text-sm">Host events and manage players</p>
+          <p className="text-gray-300 text-xs font-medium leading-relaxed">
+            Compete in tournament and<br /> track your ranking
+          </p>
         </Link>
 
       </div>
 
-      {/* Back to Login */}
-      <Link href="/login" className="mt-12 text-gray-400 hover:text-gray-600 text-sm underline underline-offset-4">
-        Back to login
-      </Link>
+      {/* Bottom Branding / Footer */}
+      <div className="mt-16 text-center flex flex-col items-center">
+        <h2 
+          className="text-4xl md:text-5xl font-black italic text-white uppercase tracking-wide mb-3"
+          style={{ 
+            textShadow: "0px 0px 8px rgba(255, 255, 255, 0.8), 0px 0px 20px rgba(255, 255, 255, 0.5)" 
+          }}
+        >
+          Enter The Arena
+        </h2>
+        <p className="text-gray-900 font-extrabold italic text-sm md:text-base tracking-wide">
+          Compete. Rise. Dominate.
+        </p>
+      </div>
     </main>
   );
 }
