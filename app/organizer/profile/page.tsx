@@ -21,14 +21,14 @@ const upcomingEvents = [
 
 type Profile = {
   id: string;
-  full_name: string;
-  age: string,
-  dojo: string;
-  belt_rank: string;
-  gender: string;
-  instructor: string;
+  username: string;
+  dob: string,
+  organization_name: string;
+  position: string;
+  location: string;
+  contact_number: string;
   status: string;
-  certificate_url?: string;
+  organization_certificate?: string;
 };
 
 export default function PlayerProfilePage() {
@@ -46,7 +46,7 @@ export default function PlayerProfilePage() {
       if (!user) return;
 
       const { data, error } = await (supabase as any)
-        .from("player_profiles")
+        .from("organizer_profiles")
         .select("*")
         .eq("id", user.id)
         .single();
@@ -58,11 +58,11 @@ export default function PlayerProfilePage() {
 
       setProfile(data);
 
-      if (data?.certificate_url) {
+      if (data?.organization_certificate) {
         const { data: signedData, error: signedError } =
           await supabase.storage
             .from("certificates")
-            .createSignedUrl(data.certificate_url, 60);
+            .createSignedUrl(data.organization_certificate, 60);
 
         if (signedError) {
           console.error("SIGNED URL ERROR:", signedError.message);
@@ -86,7 +86,7 @@ export default function PlayerProfilePage() {
     return <p className="p-6">Loading profile...</p>;
   }
 
-  const playerName = profile.full_name || "New Player";
+  const playerName = profile.username || "New Player";
   const statusColor =
     profile.status === "verified"
       ? "text-green-600"
@@ -102,7 +102,7 @@ export default function PlayerProfilePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">
-              Player <span className="text-red-600">Profile</span>
+              Organizer <span className="text-red-600">Profile</span>
             </h1>
             {/* ✅ Added Back to Dashboard Link */}
             <Link 
@@ -148,28 +148,28 @@ export default function PlayerProfilePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-gray-500">Dojo</p>
-              <p className="font-semibold">{profile.dojo || "Independent"}</p>
+              <p className="text-gray-500">Organization</p>
+              <p className="font-semibold">{profile.organization_name || "Independent"}</p>
             </div>
 
             <div>
-              <p className="text-gray-500">Belt Rank</p>
-              <p className="font-semibold">{profile.belt_rank || "Not Set"}</p>
+              <p className="text-gray-500">Position</p>
+              <p className="font-semibold">{profile.position || "Not Set"}</p>
             </div>
 
             <div>
-              <p className="text-gray-500">Gender</p>
-              <p className="font-semibold">{profile.gender || "Not Set"}</p>
+              <p className="text-gray-500">Location</p>
+              <p className="font-semibold">{profile.location || "Not Set"}</p>
             </div>
 
             <div>
-              <p className="text-gray-500">Instructor</p>
-              <p className="font-semibold">{profile.instructor || "Not Set"}</p>
+              <p className="text-gray-500">Contact Number</p>
+              <p className="font-semibold">{profile.contact_number || "Not Set"}</p>
             </div>
 
             <div>
-              <p className="text-gray-500">Age</p>
-              <p className="font-semibold">{profile.age || "Not Set"}</p>
+              <p className="text-gray-500">Date of Birth</p>
+              <p className="font-semibold">{profile.dob || "Not Set"}</p>
             </div>
 
             <div>
@@ -235,7 +235,7 @@ export default function PlayerProfilePage() {
             </h2>
 
             <Link
-              href="/event_browsing"
+              href="/organizer/event_dashb"
               className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline"
             >
               View All Events
