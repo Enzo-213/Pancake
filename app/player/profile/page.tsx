@@ -26,7 +26,7 @@ type Profile = {
   dojo: string;
   belt_rank: string;
   dob: string;
-  instructor: string;
+  gender: string;
   status: string;
   certificate_url?: string;
 };
@@ -163,8 +163,8 @@ export default function PlayerProfilePage() {
             </div>
 
             <div>
-              <p className="text-gray-500">Instructor</p>
-              <p className="font-semibold">{profile.instructor || "Not Set"}</p>
+              <p className="text-gray-500">Gender</p>
+              <p className="font-semibold">{profile.gender || "Not Set"}</p>
             </div>
 
             <div>

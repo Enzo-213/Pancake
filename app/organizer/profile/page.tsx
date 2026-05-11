@@ -1,101 +1,264 @@
-import React from "react";
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; 
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
-// Mock data for management overview
-const organizerStats = [
-  { label: "Active Events", value: "3" },
-  { label: "Total Players", value: "482" },
-  { label: "Upcoming Bookings", value: "12" },
-  { label: "Partner Venues", value: "5" },
+// 🔥 Your stats (kept)
+const orgStats = [
+  { label: "Matches Played", value: "24" },
+  { label: "Win Rate", value: "72%" },
+  { label: "Total Points", value: "1,150" },
+  { label: "Team Ranking", value: "#12" },
 ];
 
-const managedEvents = [
-  { name: "Summer Basketball League", status: "In Progress", registrations: "120/128" },
-  { name: "Regional Volleyball Finals", status: "Upcoming", registrations: "45/60" },
+// 🔥 Your events (kept)
+const upcomingEvents = [
+  { event: "City Sports Open - Round 1", date: "Oct 15, 2026", time: "6:00 PM" },
+  { event: "Weekly Local Scrimmage", date: "Oct 18, 2026", time: "5:30 PM" },
 ];
 
-export default function OrganizerProfilePage() {
-  const organizerName = "Coach Roberto";
+type Profile = {
+  id: string;
+  full_name: string;
+  age: string,
+  dojo: string;
+  belt_rank: string;
+  gender: string;
+  instructor: string;
+  status: string;
+  certificate_url?: string;
+};
+
+export default function PlayerProfilePage() {
+  const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
+
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) return;
+
+      const { data, error } = await (supabase as any)
+        .from("player_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("PROFILE FETCH ERROR:", error.message);
+        return;
+      }
+
+      setProfile(data);
+
+      if (data?.certificate_url) {
+        const { data: signedData, error: signedError } =
+          await supabase.storage
+            .from("certificates")
+            .createSignedUrl(data.certificate_url, 60);
+
+        if (signedError) {
+          console.error("SIGNED URL ERROR:", signedError.message);
+        } else {
+          setCertificateUrl(signedData.signedUrl);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [supabase]);
+
+  // 🔥 Log Out Function
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Error signing out:", error.message);
+    router.push("/login");
+  };
+
+  if (!profile) {
+    return <p className="p-6">Loading profile...</p>;
+  }
+
+  const playerName = profile.full_name || "New Player";
+  const statusColor =
+    profile.status === "verified"
+      ? "text-green-600"
+      : profile.status === "rejected"
+      ? "text-red-600"
+      : "text-yellow-600";
 
   return (
     <main className="min-h-screen bg-white text-gray-900 font-sans">
-      {/* 1. Management Header */}
-      <header className="border-b-2 border-red-600 p-6 bg-white">
+
+      {/* HEADER */}
+      <header className="border-b border-gray-100 p-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-gray-950">
-              Organizer <span className="text-red-600">Dashboard</span>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">
+              Player <span className="text-red-600">Profile</span>
             </h1>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Management Portal</p>
+            {/* ✅ Added Back to Dashboard Link */}
+            <Link 
+              href="/event_browsing" 
+              className="text-xs font-semibold text-red-600 hover:text-red-800 flex items-center gap-1 mt-1 transition-colors"
+            >
+              ← Back to Dashboard 
+            </Link>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-900">{organizerName}</p>
-              <p className="text-xs text-red-600 font-medium">Head Coordinator</p>
+
+          <div className="flex items-center gap-3">
+            {/* Wrapper for Welcome Text and Sign Out */}
+            <div className="flex flex-col items-end">
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-gray-500">Welcome,</span>
+                <span className="font-semibold text-gray-800">{playerName}</span>
+              </div>
+              
+              {/* ✅ Added Sign Out Link below name */}
+              <button 
+                onClick={handleSignOut}
+                className="text-[10px] font-bold text-red-600 underline hover:text-red-800 transition-colors uppercase tracking-widest cursor-pointer"
+              >
+                Sign Out
+              </button>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-gray-900 text-white flex items-center justify-center font-bold border-b-4 border-red-600">
-              {organizerName.charAt(0)}
+
+            <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
+              {playerName.charAt(0)}
             </div>
           </div>
         </div>
       </header>
 
-      {/* 2. Management Content Area */}
-      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8">
-        
-        {/* 3. Action Hub (The Big Red Button) */}
-        <section className="flex flex-wrap gap-4">
-          <button className="bg-red-600 text-white font-black uppercase tracking-tight px-8 py-4 rounded-xl hover:bg-red-700 transition shadow-lg active:scale-95 flex items-center gap-2">
-            <span className="text-xl">+</span> Create New Event
-          </button>
-          <button className="bg-white text-gray-900 border-2 border-gray-900 font-bold uppercase tracking-tight px-8 py-4 rounded-xl hover:bg-gray-50 transition active:scale-95">
-            Manage Venues
-          </button>
+      {/* MAIN */}
+      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
+
+        {/* PROFILE */}
+        <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Karate Profile 🥋
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500">Dojo</p>
+              <p className="font-semibold">{profile.dojo || "Independent"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Belt Rank</p>
+              <p className="font-semibold">{profile.belt_rank || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Gender</p>
+              <p className="font-semibold">{profile.gender || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Instructor</p>
+              <p className="font-semibold">{profile.instructor || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Age</p>
+              <p className="font-semibold">{profile.age || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Status</p>
+              <p className={`font-semibold ${statusColor}`}>
+                {profile.status.toUpperCase()}
+              </p>
+            </div>
+          </div>
+
+          {certificateUrl && (
+            <div className="mt-4">
+              <p className="text-gray-500 text-sm mb-1">Certificate</p>
+              <a
+                href={certificateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+              >
+                View Certificate
+              </a>
+            </div>
+          )}
+
+        <div className="mt-6">
+          <Link
+            href="/player/profile/edit"
+            className="inline-block bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition"
+          >
+            Edit Profile
+          </Link>
+        </div>
         </section>
 
-        {/* 4. Organizer Analytics Grid */}
+        {/* STATS */}
         <section>
-          <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Operations Overview</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {organizerStats.map((stat) => (
-              <div key={stat.label} className="bg-white p-6 rounded-2xl border-2 border-gray-100">
-                <p className="text-xs font-bold text-red-600 uppercase tracking-wider">{stat.label}</p>
-                <p className="text-4xl font-black text-gray-950 mt-2">{stat.value}</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            Key Performance
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {orgStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm"
+              >
+                <p className="text-sm font-medium text-gray-500">
+                  {stat.label}
+                </p>
+                <p className="text-4xl font-extrabold text-gray-950 mt-1">
+                  {stat.value}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* 5. Live Event Tracking */}
-        <section className="bg-gray-50 p-8 rounded-3xl border border-gray-200">
-          <h2 className="text-xl font-black text-gray-950 mb-6 flex items-center gap-2">
-            <div className="w-2 h-6 bg-red-600 rounded-full"></div>
-            Active & Upcoming Events
-          </h2>
-          
-          <div className="grid gap-4">
-            {managedEvents.map((event) => (
-              <div key={event.name} className="bg-white p-6 rounded-2xl border border-gray-200 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex-1">
-                  <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${event.status === 'In Progress' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {event.status}
-                  </span>
-                  <h3 className="text-lg font-bold text-gray-900 mt-2">{event.name}</h3>
-                  <div className="w-full bg-gray-100 h-2 rounded-full mt-3 overflow-hidden">
-                    <div className="bg-red-600 h-full w-[85%]"></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2 font-medium">Registrations: {event.registrations} players</p>
+        {/* EVENTS */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">
+              Upcoming Events
+            </h2>
+
+            <Link
+              href="/event_browsing"
+              className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline"
+            >
+              View All Events
+            </Link>
+          </div>
+
+          <div className="space-y-4">
+            {upcomingEvents.map((match) => (
+              <div
+                key={match.event}
+                className="bg-gray-50 p-6 rounded-2xl border flex justify-between items-center shadow-sm"
+              >
+                <div>
+                  <p className="font-semibold">{match.event}</p>
+                  <p className="text-sm text-gray-500">
+                    {match.date} • {match.time}
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-bold hover:bg-gray-50 transition">Edit</button>
-                  <button className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition">Roster</button>
-                </div>
+                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-red-700 transition-colors">
+                  View Details
+                </button>
               </div>
             ))}
-            <Link href="/login" className="mtext-red-600 text-sm font-medium hover:text-red-700 hover:underline ml-auto">
-                Log out
-            </Link>
           </div>
         </section>
 

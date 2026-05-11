@@ -29,7 +29,7 @@ export default function EditProfilePage() {
   const [dojo, setDojo] = useState("");
   const [belt, setBelt] = useState("");
   const [dob, setDob] = useState("");
-  const [instructor, setInstructor] = useState("");
+  const [gender, setGender] = useState("");
 
   const inputStyle =
     "w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500";
@@ -59,7 +59,7 @@ export default function EditProfilePage() {
       setDojo(data.dojo || "");
       setBelt(data.belt_rank || "");
       setDob(data.dob || "");
-      setInstructor(data.instructor || "");
+      setGender(data.gender || "");
     };
 
     fetchProfile();
@@ -89,7 +89,7 @@ export default function EditProfilePage() {
         age,
         belt_rank: belt,
         dob,
-        instructor,
+        gender,
       })
       .eq("id", user.id);
 
@@ -163,12 +163,17 @@ export default function EditProfilePage() {
           </div>
 
           <div>
-            <label className={labelStyle}>Instructor</label>
-            <input
-              value={instructor}
-              onChange={(e) => setInstructor(e.target.value)}
+            <label className={labelStyle}>Gender</label>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
               className={inputStyle}
-            />
+            >
+              <option value="">Gender</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Prefer not to say</option>
+            </select>
           </div>
 
           <button
