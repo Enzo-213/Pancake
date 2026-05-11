@@ -27,6 +27,81 @@ export type Database = {
           created_at?: string;
         };
       };
+
+      player_profiles: {
+        Row: {
+          id: string;
+          full_name: string;
+          dojo: string | null;
+          belt_rank: string;
+          dob: string;
+          instructor: string;
+          certificate_url: string | null;
+          status: string | null;
+        };
+        Insert: {
+          id: string;
+          full_name: string;
+          dojo?: string | null;
+          belt_rank: string;
+          dob: string;
+          instructor: string;
+          certificate_url?: string | null;
+          status?: string | null;
+        };
+        Update:{
+          id?: string;
+          full_name?: string;
+          dojo?: string | null;
+          belt_rank?: string;
+          dob?: string;
+          instructor?: string;
+          certificate_url?: string | null;
+          status?: string | null;
+        };
+      };
+
+      organizer_profiles: {
+        Row: {
+          id:string;
+          username: string;
+          dob: string;
+          organization_name: string;
+          contact_number: string;
+          location: string;
+          karate_style: string;
+          federation: string;
+          position: string;
+          organization_certificate: string;
+          status: string | null;
+        };
+        Insert: {
+          id:string;
+          username: string;
+          dob: string;
+          organization_name: string;
+          contact_number: string;
+          location: string;
+          karate_style: string;
+          federation: string;
+          position: string;
+          organization_certificate?: string | null;
+          status: string | null;
+        };
+        Update: {
+          id?:string;
+          username?: string;
+          dob?: string;
+          organization_name?: string;
+          contact_number?: string;
+          location?: string;
+          karate_style?: string;
+          federation?: string;
+          position?: string;
+          organization_certificate?: string | null;
+          status?: string | null;
+        };
+      };
     };
   };
 };

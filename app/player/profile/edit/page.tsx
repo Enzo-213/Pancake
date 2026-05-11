@@ -4,6 +4,21 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
+function calculateAge(dob: string): number { // calculate player's age
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  // If birthday hasn't occurred yet this year, subtract 1
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+}
+
 export default function EditProfilePage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -50,6 +65,9 @@ export default function EditProfilePage() {
     fetchProfile();
   }, []);
 
+  //recalculate age 
+  const age = calculateAge(dob);
+
   // 🔥 SAVE TO DATABASE
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +86,7 @@ export default function EditProfilePage() {
       .update({
         full_name: fullName,
         dojo,
+        age,
         belt_rank: belt,
         dob,
         instructor,

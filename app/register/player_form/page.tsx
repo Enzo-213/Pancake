@@ -4,6 +4,21 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
+function calculateAge(dob: string): number { // calculate player's age
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  // If birthday hasn't occurred yet this year, subtract 1
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+}
+
 export default function PlayerRegisterPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -14,6 +29,7 @@ export default function PlayerRegisterPage() {
 
   // PLAYER STATES
   const [fullName, setFullName] = useState("");
+  const [gender, setGender] = useState("");
   const [dojo, setDojo] = useState("");
   const [beltRank, setBeltRank] = useState("");
   const [dob, setDob] = useState("");
@@ -30,7 +46,7 @@ export default function PlayerRegisterPage() {
     setLoading(true);
 
     // VALIDATION
-    if (!email || !password || !fullName || !dob || !instructor || !beltRank) {
+    if (!email || !password || !fullName || !gender || !dob || !instructor || !beltRank) {
       alert("Please fill in all required player fields.");
       setLoading(false);
       return;
@@ -89,6 +105,9 @@ export default function PlayerRegisterPage() {
       certificatePath = filePath;
     }
 
+    //calculating age 
+    const age = calculateAge(dob);
+
     // 3. SAVE PLAYER PROFILE
     const { error: profileError } = await (supabase as any)
       .from("player_profiles")
@@ -96,9 +115,11 @@ export default function PlayerRegisterPage() {
         id: user.id,
         email,
         full_name: fullName,
+        gender,
         dojo,
         belt_rank: beltRank,
         dob,
+        age,
         instructor,
         certificate_url: certificatePath,
         status: "pending",
@@ -160,6 +181,18 @@ export default function PlayerRegisterPage() {
             className={inputStyle}
             required
           />
+
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className={inputStyle}
+            required
+          >
+            <option value="">Gender</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Prefer not to say</option>
+          </select>
 
           <input
             placeholder="Dojo / Club"

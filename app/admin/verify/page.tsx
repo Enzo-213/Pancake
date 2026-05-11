@@ -27,7 +27,7 @@ export default function AdminVerifyPage() {
   // 🔥 FETCH REAL PLAYERS
   useEffect(() => {
     const fetchPlayers = async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("player_profiles")
         .select("*")
         .eq("status", "pending");
@@ -148,10 +148,10 @@ export default function AdminVerifyPage() {
                 Admin Verification
               </p>
               <h1 className="mt-2 text-3xl font-extrabold text-gray-950">
-                Review user certificates
+                Review Player Certificates
               </h1>
               <p className="mt-3 max-w-2xl text-sm text-gray-600">
-                Review uploaded certificates and approve or reject users.
+                Review uploaded certificates and approve or reject player accounts.
               </p>
             </div>
 

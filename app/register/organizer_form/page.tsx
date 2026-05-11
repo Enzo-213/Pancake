@@ -15,6 +15,7 @@ export default function OrganizerRegisterPage() {
   // ORGANIZER STATES
   const [username, setUsername] = useState("");
   const [orgName, setOrgName] = useState("");
+  const [dob, setDob] = useState("");
   const [location, setLocation] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [karateStyle, setKarateStyle] = useState("");
@@ -36,6 +37,7 @@ export default function OrganizerRegisterPage() {
       !email ||
       !password ||
       !username ||
+      !dob ||
       !orgName ||
       !location ||
       !contactNumber ||
@@ -107,6 +109,7 @@ export default function OrganizerRegisterPage() {
       .upsert({
         id: user.id,
         username,
+        dob, 
         organization_name: orgName, // We use org name as full_name for organizers
         location,
         contact_number: contactNumber,
@@ -172,6 +175,14 @@ export default function OrganizerRegisterPage() {
             className={inputStyle}
             required
           /> 
+
+          <input
+            type="date"
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            className={inputStyle}
+            required
+          />
 
           {/* ORGANIZATION DETAILS */}
           <input

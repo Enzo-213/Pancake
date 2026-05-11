@@ -22,6 +22,7 @@ const upcomingMatches = [
 type Profile = {
   id: string;
   full_name: string;
+  age: string,
   dojo: string;
   belt_rank: string;
   dob: string;
@@ -164,6 +165,11 @@ export default function PlayerProfilePage() {
             <div>
               <p className="text-gray-500">Instructor</p>
               <p className="font-semibold">{profile.instructor || "Not Set"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Age</p>
+              <p className="font-semibold">{profile.age || "Not Set"}</p>
             </div>
 
             <div>
