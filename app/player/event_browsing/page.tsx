@@ -44,68 +44,64 @@ export default function EventBrowsing() {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-[#F8F9FA] ${montserrat.className} relative`}>
-      
-      {/* FIXED BACKGROUND: image_a62e6d.jpg 
-          This container ensures the image stays at the top but is large enough 
-          not to feel "cut off" by a small div.
-      */}
-      <div className="absolute top-0 left-0 w-full h-[500px] z-0 overflow-hidden">
-        <div 
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: "url('/images/bg-arena.png')",
-            backgroundPosition: 'center 20%' // Adjusts vertical focus of the arena
-          }}
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* HERO + HEADER CONTAINER */}
+<div
+  className="relative bg-cover bg-center bg-no-repeat text-white"
+  style={{ backgroundImage: "url('/welcome-bg.png')" }}
+>
+  
+
+  {/* Header Section */}
+  <header className="relative z-10 p-4 flex justify-between items-center">
+    <div className="text-xl font-bold tracking-tight text-white">
+      HuddleUp
+    </div>
+
+    <div className="flex items-center gap-3">
+      <Link 
+        href="/player/profile" 
+        className="font-medium hover:text-gray-200 transition-colors cursor-pointer"
+      >
+        {userName}
+      </Link>
+
+      <div className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white overflow-hidden shadow-sm">
+        <img 
+          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} 
+          alt="User Avatar" 
+          className="w-full h-full object-cover"
         />
-        {/* Subtle gradient to blend into the white background below */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F8F9FA]" />
       </div>
+    </div>
+  </header>
 
-      {/* Navigation */}
-      <header className="relative z-10 p-6 flex justify-between items-center max-w-7xl mx-auto text-white">
-        <Link href="/player/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity drop-shadow-md">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
-          <span className="font-black text-xs uppercase tracking-widest">Back</span>
-        </Link>
-        
-        <div className="flex items-center gap-2 bg-black/20 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/20">
-          <div className="w-6 h-6 bg-[#bd1e24] rounded-full flex items-center justify-center text-white font-bold text-[10px] border border-white/40">
-              {userName.charAt(0)}
-          </div>
-          <span className="font-bold text-xs uppercase tracking-tighter">{userName}</span>
-        </div>
-      </header>
+  {/* Hero Section */}
+  <div className="relative z-10 p-10">
+    <div className="max-w-5xl mx-auto">
+      <h1 className="text-4xl font-extrabold mb-2 text-white">
+        Find Tournaments
+      </h1>
 
-      {/* Hero Section */}
-      <section className="relative z-10 pt-10 pb-24 px-6 max-w-7xl mx-auto">
-        <div className="max-w-2xl">
-            <h1 className="text-5xl md:text-6xl font-black text-white mb-2 italic tracking-tighter uppercase drop-shadow-lg">
-                Find <span className="">Tournaments</span>
-            </h1>
-            <p className="text-white/90 text-sm md:text-base font-bold mb-8 uppercase tracking-wide drop-shadow-md">
-                Discover and join exciting tournaments near you.
-            </p>
-            
-            <div className="relative group">
-                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#bd1e24] transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                </div>
-                <input 
-                    type="text" 
-                    placeholder="Search tournaments, sports, locations..." 
-                    className="w-full bg-white p-5 pl-14 rounded-2xl text-gray-800 outline-none shadow-2xl border-none focus:ring-4 focus:ring-[#bd1e24]/20 transition-all text-sm font-bold placeholder:text-gray-400"
-                />
-            </div>
-        </div>
-      </section>
+      <p className="text-lg opacity-90 mb-6 text-white">
+        Discover and join exciting tournaments near you.
+      </p>
 
-      {/* Content Area */}
-      <main className="relative z-20 max-w-7xl mx-auto px-6 pb-24">
-        <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-black text-gray-900 uppercase italic tracking-tighter">Upcoming Tournaments</h2>
-            <div className="h-1 flex-1 bg-gray-200 ml-6 rounded-full opacity-20" />
-        </div>
+      <div className="relative max-w-lg">
+        <input 
+          type="text" 
+          placeholder="Search tournaments, sports, locations..." 
+          className="w-full p-4 pl-6 rounded-full bg-white/10 border border-white/30 text-white placeholder-white/70 outline-none shadow-lg backdrop-blur-sm focus:ring-2 focus:ring-red-300 transition-all"
+        />
+      </div>
+    </div>
+  </div>
+
+</div>
+
+      {/* Event Listings Section */}
+      <main className="p-8 max-w-5xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Upcoming Tournaments</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {events.map((event) => (

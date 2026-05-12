@@ -33,7 +33,7 @@ type Profile = {
   dojo: string;
   belt_rank: string;
   dob: string;
-  instructor: string;
+  gender: string;
   status: string;
   category?: string;
   email?: string;
@@ -120,10 +120,10 @@ export default function PlayerProfilePage() {
             <h1 className="text-3xl font-extrabold">
               Player <span className="text-red-600">Profile</span>
             </h1>
-
-            <Link
-              href="/event_browsing"
-              className="text-sm text-red-600"
+            {/* ✅ Added Back to Dashboard Link */}
+            <Link 
+              href="/player/event_browsing" 
+              className="text-xs font-semibold text-red-600 hover:text-red-800 flex items-center gap-1 mt-1 transition-colors"
             >
               ← Back to Dashboard
             </Link>
@@ -200,10 +200,8 @@ export default function PlayerProfilePage() {
             </div>
 
             <div>
-              <p className="text-gray-500">DOB</p>
-              <p className="font-semibold">
-                {profile.dob || "N/A"}
-              </p>
+              <p className="text-gray-500">Gender</p>
+              <p className="font-semibold">{profile.gender || "Not Set"}</p>
             </div>
 
             <div>
