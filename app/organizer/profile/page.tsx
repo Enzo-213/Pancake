@@ -106,7 +106,7 @@ export default function PlayerProfilePage() {
             </h1>
             {/* ✅ Added Back to Dashboard Link */}
             <Link 
-              href="/event_browsing" 
+              href="/organizer/event_dashb" 
               className="text-xs font-semibold text-red-600 hover:text-red-800 flex items-center gap-1 mt-1 transition-colors"
             >
               ← Back to Dashboard 

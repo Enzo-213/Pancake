@@ -93,41 +93,59 @@ export default function EventBrowsing() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      {/* Header Section */}
-      <header className="bg-[#D32F2F] text-white p-4 flex justify-between items-center shadow-md">
-        <div className="text-xl font-bold tracking-tight text-white">HuddleUp</div>
-        
-        <div className="flex items-center gap-3">
-          <Link 
-            href="/player/profile" 
-            className="font-medium hover:text-gray-200 transition-colors cursor-pointer"
-          >
-            {userName}
-          </Link>
-          <div className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white overflow-hidden shadow-sm">
-            <img 
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} 
-              alt="User Avatar" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-      </header>
+      {/* HERO + HEADER CONTAINER */}
+<div
+  className="relative bg-cover bg-center bg-no-repeat text-white"
+  style={{ backgroundImage: "url('/welcome-bg.png')" }}
+>
+  
 
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-[#E53935] to-[#C62828] p-10 text-white">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-4xl font-extrabold mb-2 text-white">Find Tournaments</h1>
-          <p className="text-lg opacity-90 mb-6 text-white">Discover and join exciting tournaments near you.</p>
-          <div className="relative max-w-lg">
-            <input 
-              type="text" 
-              placeholder="Search tournaments, sports, locations..." 
-              className="w-full p-4 pl-6 rounded-full text-gray-800 outline-none shadow-lg focus:ring-2 focus:ring-red-300 transition-all"
-            />
-          </div>
-        </div>
+  {/* Header Section */}
+  <header className="relative z-10 p-4 flex justify-between items-center">
+    <div className="text-xl font-bold tracking-tight text-white">
+      HuddleUp
+    </div>
+
+    <div className="flex items-center gap-3">
+      <Link 
+        href="/player/profile" 
+        className="font-medium hover:text-gray-200 transition-colors cursor-pointer"
+      >
+        {userName}
+      </Link>
+
+      <div className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white overflow-hidden shadow-sm">
+        <img 
+          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} 
+          alt="User Avatar" 
+          className="w-full h-full object-cover"
+        />
       </div>
+    </div>
+  </header>
+
+  {/* Hero Section */}
+  <div className="relative z-10 p-10">
+    <div className="max-w-5xl mx-auto">
+      <h1 className="text-4xl font-extrabold mb-2 text-white">
+        Find Tournaments
+      </h1>
+
+      <p className="text-lg opacity-90 mb-6 text-white">
+        Discover and join exciting tournaments near you.
+      </p>
+
+      <div className="relative max-w-lg">
+        <input 
+          type="text" 
+          placeholder="Search tournaments, sports, locations..." 
+          className="w-full p-4 pl-6 rounded-full bg-white/10 border border-white/30 text-white placeholder-white/70 outline-none shadow-lg backdrop-blur-sm focus:ring-2 focus:ring-red-300 transition-all"
+        />
+      </div>
+    </div>
+  </div>
+
+</div>
 
       {/* Event Listings Section */}
       <main className="p-8 max-w-5xl mx-auto">
