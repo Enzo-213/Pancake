@@ -136,11 +136,18 @@ export default function EventBrowsing() {
       </p>
 
       <div className="relative max-w-lg">
-        <input 
-          type="text" 
-          placeholder="Search tournaments, sports, locations..." 
-          className="w-full p-4 pl-6 rounded-full bg-white/10 border border-white/30 text-white placeholder-white/70 outline-none shadow-lg backdrop-blur-sm focus:ring-2 focus:ring-red-300 transition-all"
-        />
+        <a
+        href="/organizer/event_dashb/create_tourna"
+        className="group inline-flex items-center gap-3 px-7 py-4 rounded-full font-bold text-base tracking-wide shadow-xl transition-all duration-300
+        bg-white text-red-600
+        hover:bg-red-600 hover:text-white hover:shadow-red-500/40 hover:scale-105
+        active:scale-95 border-2 border-white/80 hover:border-red-400"
+        >
+        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-red-600 text-white group-hover:bg-white group-hover:text-red-600 transition-all duration-300 text-lg leading-none">
+        +
+        </span>
+        Create Tournament
+        </a>
       </div>
     </div>
   </div>
@@ -149,7 +156,7 @@ export default function EventBrowsing() {
 
       {/* Event Listings Section */}
       <main className="p-8 max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Managed Tournaments</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Upcoming Tournaments</h2>
         
         <div className="flex flex-col gap-4">
           {events.map((event) => (
