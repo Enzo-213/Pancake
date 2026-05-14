@@ -51,11 +51,11 @@ export default function EmailPasswordDemo({
       return;
     }
 
-    const { data: profile, error: profileError } = await (supabase as any)
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
-      .single();
+      .single<{ role: string }>();
 
     if (profileError || !profile) {
       setStatus("Error fetching profile. Ensure your account is fully set up.");
