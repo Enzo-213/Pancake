@@ -3,7 +3,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Define the shape of your database
+// Define the shape of the database
 export type Database = {
   public: {
     Tables: {
@@ -11,7 +11,7 @@ export type Database = {
         Row: {                  // What a row looks like when you READ it
           id: string;
           email: string;
-          role: 'player' | 'organizer'; // Restricts the role to these two strings
+          role: 'player' | 'organizer' | 'admin'; // Restricts the role to these three strings
           created_at: string;
         };
         Insert: {               // What you provide when you CREATE a row
@@ -31,6 +31,9 @@ export type Database = {
       player_profiles: {
         Row: {
           id: string;
+          email: string;
+          gender: string;
+          age: number;
           full_name: string;
           dojo: string | null;
           belt_rank: string;
@@ -41,6 +44,9 @@ export type Database = {
         };
         Insert: {
           id: string;
+          email: string;
+          gender: string;
+          age: number
           full_name: string;
           dojo?: string | null;
           belt_rank: string;
@@ -51,6 +57,9 @@ export type Database = {
         };
         Update:{
           id?: string;
+          email?: string;
+          gender?: string;
+          age?: number
           full_name?: string;
           dojo?: string | null;
           belt_rank?: string;
