@@ -11,12 +11,26 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
+function calculateAge(dob: string): number { // calculate player's age
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  // If birthday hasn't occurred yet this year, subtract 1
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+}
+
+
 export default function RegisterPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
-
-  const role = searchParams.get("role") || "player";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,13 +38,10 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [dojo, setDojo] = useState("");
   const [beltRank, setBeltRank] = useState("");
-  const [category, setCategory] = useState("");
+  const [gender, setGender] = useState("");
   const [dob, setDob] = useState("");
   const [instructor, setInstructor] = useState("");
   const [certificate, setCertificate] = useState<File | null>(null);
-
-  const [orgName, setOrgName] = useState("");
-  const [location, setLocation] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -44,25 +55,15 @@ export default function RegisterPage() {
     setLoading(true);
 
     // 🔥 VALIDATION
-    if (role === "player") {
-      if (!email || !password || !fullName || !dob || !instructor || !beltRank || !category) {
-        alert("Please fill in all required fields.");
-        setLoading(false);
-        return;
-      }
-      if (!certificate) {
-        alert("Please upload your belt certification.");
-        setLoading(false);
-        return;
-      }
+    if (!email || !password || !fullName || !dob || !instructor || !beltRank || !gender) {
+      alert("Please fill in all required fields.");
+      setLoading(false);
+      return;
     }
-
-    if (role === "organizer") {
-      if (!email || !password || !orgName) {
-        alert("Please fill in all required fields.");
-        setLoading(false);
-        return;
-      }
+    if (!certificate) {
+      alert("Please upload your belt certification.");
+      setLoading(false);
+      return;
     }
 
     // 🔥 CREATE USER
@@ -70,7 +71,7 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        data: { role },
+        data: { role: "player" },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
@@ -98,7 +99,7 @@ export default function RegisterPage() {
     // 🔥 UPLOAD CERTIFICATE
     let certificatePath = null;
 
-    if (role === "player" && certificate) {
+    if (certificate) {
       const fileExt = certificate.name.split(".").pop();
       const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
@@ -115,54 +116,50 @@ export default function RegisterPage() {
       certificatePath = filePath; 
     }
 
+    // 🔥 SAVE TO BASE PROFILES TABLE FIRST
+    const { error: baseProfileError } = await (supabase as any)
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        email: email,
+        role: "player"
+      });
+
+    if (baseProfileError) {
+      console.error("BASE PROFILE ERROR:", baseProfileError.message);
+      alert("Failed to save base profile: " + baseProfileError.message);
+      setLoading(false);
+      return; // <-- Stop execution here
+    }
+
+    const age = calculateAge(dob)
+
     // 🔥 SAVE PROFILE
-    if (role === "player") {
-      const { error: profileError } = await (supabase as any)
-        .from("profiles")
-        .upsert({
-          id: user.id,
-          full_name: fullName,
-          dojo,
-          belt_rank: beltRank,
-          category,
-          dob,
-          instructor,
-          certificate_url: certificatePath, 
-          role: "player",
-          status: "pending",
-        });
+    const { error: profileError } = await (supabase as any)
+      .from("player_profiles")
+      .upsert({
+        id: user.id,
+        email,
+        full_name: fullName,
+        dojo,
+        belt_rank: beltRank,
+        gender,
+        age,
+        dob,
+        instructor,
+        certificate_url: certificatePath, 
+        status: "pending",
+      });
 
       if (profileError) {
         console.error("PROFILE ERROR:", profileError.message);
-        alert("Failed to save player profile");
+        alert("Failed to save player profile: " + profileError.message);
+        setLoading(false);
+        return;
       }
-    }
-
-    if (role === "organizer") {
-      const { error: orgError } = await (supabase as any)
-        .from("profiles")
-        .upsert({
-          id: user.id,
-          full_name: orgName,
-          dojo: location,
-          role: "organizer",
-          status: "verified",
-        });
-
-      if (orgError) {
-        console.error("ORG ERROR:", orgError.message);
-        alert("Failed to save organizer profile");
-      }
-    }
-
+      
     alert("Account created! Please check your email to confirm.");
-
-    if (role === "organizer") {
-      router.push("/organizer/profile");
-    } else {
-      router.push("/player/profile");
-    }
-
+    router.push("/player/profile");
     setLoading(false);
   };
 
@@ -176,7 +173,7 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl font-black text-black tracking-wide uppercase mb-2">
-            Create {role} Account
+            Create Player Account
           </h1>
           <p className="text-gray-500 text-sm font-medium">
             Sign up to find and participate in tournaments
@@ -210,7 +207,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Player Specific Fields */}
-          {role === "player" && (
+          
             <>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -258,13 +255,13 @@ export default function RegisterPage() {
                   <option>Black</option>
                 </select>
 
-                <select value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                <select value={gender}
+                  onChange={(e) => setGender(e.target.value)}
                   className={inputStyleNoIcon} required>
-                  <option value="" disabled>Category</option>
-                  <option>Kata</option>
-                  <option>Kumite</option>
-                  <option>Both</option>
+                  <option value="" disabled>Gender</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Prefer not to say</option>
                 </select>
               </div>
 
@@ -279,35 +276,6 @@ export default function RegisterPage() {
                 />
               </div>
             </>
-          )}
-
-          {/* Organizer Specific Fields */}
-          {role === "organizer" && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <input placeholder="Organization Name" value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  className={inputStyle} required />
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <input placeholder="Location" value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className={inputStyle} />
-              </div>
-            </>
-          )}
 
           {/* Submit Button */}
           <button type="submit" disabled={loading}
