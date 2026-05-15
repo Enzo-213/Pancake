@@ -4,37 +4,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
-function calculateAge(dob: string): number { // calculate player's age
-  const birthDate = new Date(dob);
-  const today = new Date();
-
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-
-  // If birthday hasn't occurred yet this year, subtract 1
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-
-  return age;
-}
-
 export default function EditProfilePage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
 
   const [loading, setLoading] = useState(false);
 
-  const [fullName, setFullName] = useState("");
-  const [dojo, setDojo] = useState("");
-  const [belt, setBelt] = useState("");
+  const [username, setUsername] = useState("");
+  const [orgName, setOrg] = useState("");
+  const [position, setPos] = useState("");
   const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("");
+  const [location, setLoc] = useState("");
 
+  // Updated to match the gray container design from the new image
   const inputStyle =
-    "w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500";
+    "w-full px-5 py-4 rounded-2xl bg-[#f4f6f8] border border-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all";
 
-  const labelStyle = "block text-sm font-semibold text-gray-700 mb-1 ml-1";
+  const labelStyle = "block text-sm font-semibold text-gray-800 mb-1 ml-1";
 
   // 🔥 FETCH EXISTING PROFILE
   useEffect(() => {
@@ -55,18 +41,15 @@ export default function EditProfilePage() {
         return;
       }
 
-      setFullName(data.full_name || "");
-      setDojo(data.dojo || "");
-      setBelt(data.belt_rank || "");
+      setUsername(data.username || "");
+      setOrg(data.orgName || "");
+      setPos(data.position || "");
       setDob(data.dob || "");
-      setGender(data.gender || "");
+      setLoc(data.location || "");
     };
 
     fetchProfile();
-  }, []);
-
-  //recalculate age 
-  const age = calculateAge(dob);
+  }, [supabase]);
 
   // 🔥 SAVE TO DATABASE
   const handleSave = async (e: React.FormEvent) => {
@@ -82,14 +65,13 @@ export default function EditProfilePage() {
     }
 
     const { error } = await (supabase as any)
-      .from("player_profiles")
+      .from("organizer_profiles")
       .update({
-        full_name: fullName,
-        dojo,
-        age,
-        belt_rank: belt,
+        username,
+        organization_name: orgName,
         dob,
-        gender,
+        position,
+        location,
       })
       .eq("id", user.id);
 
@@ -103,83 +85,91 @@ export default function EditProfilePage() {
     alert("Profile updated successfully!");
 
     // 🔥 Redirect back to profile (will refetch updated data)
-    router.push("/player/profile");
+    router.push("/organizer/profile");
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg border">
+    <main 
+      className="min-h-screen flex items-center justify-center bg-cover bg-center p-4 relative"
+      style={{ backgroundImage: "url('/images/bg-arena.png')" }}
+    >
+      {/* Optional: Add a dark overlay so the white card stands out against the background */}
+      <div className="absolute inset-0 bg-black/30"></div>
 
-        <h1 className="text-2xl font-bold text-center mb-6">
-          Edit Profile
-        </h1>
+      <div className="w-full max-w-[480px] bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl relative z-10 border border-gray-100">
+        
+        <div className="text-center mb-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            Edit Profile
+          </h1>
+        </div>
 
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
-
-          <div>
+        <form onSubmit={handleSave} className="flex flex-col gap-5">
+          
+          {/* Full Name */}
+          <div className="relative">
             <label className={labelStyle}>Full Name</label>
             <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              type="text"
+              placeholder="e.g. Tester 3"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className={inputStyle}
             />
           </div>
 
-          <div>
+          {/* Dojo / Club */}
+          <div className="relative">
             <label className={labelStyle}>Dojo / Club</label>
             <input
-              value={dojo}
-              onChange={(e) => setDojo(e.target.value)}
+              type="text"
+              placeholder="e.g. BangBang"
+              value={orgName}
+              onChange={(e) => setOrg(e.target.value)}
               className={inputStyle}
             />
           </div>
 
-          <div>
-            <label className={labelStyle}>Belt Rank</label>
-            <select
-              value={belt}
-              onChange={(e) => setBelt(e.target.value)}
+          {/* Position (Kept as text input as per original code) */}
+          <div className="relative">
+            <label className={labelStyle}>Position</label>
+            <input
+              type="text"
+              placeholder="e.g. Head Coach"
+              value={position}
+              onChange={(e) => setPos(e.target.value)}
               className={inputStyle}
-            >
-              <option value="">Select Belt Rank</option>
-              <option>White</option>
-              <option>Yellow</option>
-              <option>Green</option>
-              <option>Blue</option>
-              <option>Purple</option>
-              <option>Brown</option>
-              <option>Black</option>
-            </select>
+            />
           </div>
 
-          <div>
+          {/* Date of Birth */}
+          <div className="relative">
             <label className={labelStyle}>Date of Birth</label>
             <input
               type="date"
               value={dob}
               onChange={(e) => setDob(e.target.value)}
+              className={`${inputStyle} ${!dob ? "text-gray-400" : "text-gray-900"}`}
+            />
+          </div>
+
+          {/* Location (Kept as text input as per original code) */}
+          <div className="relative">
+            <label className={labelStyle}>Location</label>
+            <input
+              type="text"
+              placeholder="e.g. Cebu City"
+              value={location}
+              onChange={(e) => setLoc(e.target.value)}
               className={inputStyle}
             />
           </div>
 
-          <div>
-            <label className={labelStyle}>Gender</label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className={inputStyle}
-            >
-              <option value="">Gender</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Prefer not to say</option>
-            </select>
-          </div>
-
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="mt-4 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition"
+            className="mt-6 w-full bg-[#c2242b] text-white py-4 rounded-2xl font-bold tracking-wide hover:bg-[#a51e24] disabled:opacity-70 transition-colors shadow-lg"
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>
@@ -189,4 +179,3 @@ export default function EditProfilePage() {
     </main>
   );
 }
-
