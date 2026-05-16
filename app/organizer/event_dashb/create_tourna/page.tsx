@@ -59,18 +59,47 @@ export default function CreateTournamentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<TournamentData>(initialData);
 
-  // 1. Fetch User on Mount to prevent "user is not defined"
+  // 1. Fetch User and listen to session updates to prevent "Loading Session..." lock
   useEffect(() => {
+    let mounted = true;
+
     async function checkUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        router.push("/login"); // Redirect if not logged in
-      } else {
-        setUser(user);
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (!mounted) return;
+
+        if (error || !user) {
+          router.push("/login"); // Redirect if token is missing
+        } else {
+          setUser(user);
+        }
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+      } finally {
+        if (mounted) {
+          setLoadingAuth(false); // Fixed direct state update
+        }
       }
-      loadingAuth || setLoadingAuth(false);
     }
+
     checkUser();
+
+    // Alternate listener case if cookie sync is slightly delayed on refresh
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (session?.user) {
+        setUser(session.user);
+        setLoadingAuth(false);
+      } else if (event === "SIGNED_OUT") {
+        router.push("/login");
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase, router]);
 
   const handleInputChange = (
