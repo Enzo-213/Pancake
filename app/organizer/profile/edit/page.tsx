@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 export default function EditProfilePage() {
@@ -17,9 +18,9 @@ export default function EditProfilePage() {
   const [location, setLoc] = useState("");
 
   const inputStyle =
-    "w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500";
+    "w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all shadow-sm";
 
-  const labelStyle = "block text-sm font-semibold text-gray-700 mb-1 ml-1";
+  const labelStyle = "block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5 ml-1";
 
   // 🔥 FETCH EXISTING PROFILE
   useEffect(() => {
@@ -50,11 +51,10 @@ export default function EditProfilePage() {
     fetchProfile();
   }, []);
 
-
   // 🔥 SAVE TO DATABASE
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    loading || setLoading(true);
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
@@ -89,14 +89,33 @@ export default function EditProfilePage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg border">
+    <main 
+      className="min-h-screen bg-cover bg-no-repeat bg-top font-sans flex flex-col items-center justify-center p-4 antialiased text-gray-900"
+      style={{ backgroundImage: "url('/images/bg-arena.png')" }}
+    >
+      {/* Container wrapper adjusting matching configuration cards */}
+      <div className="w-full max-w-lg bg-white/95 rounded-[2rem] shadow-2xl shadow-gray-900/20 p-6 md:p-10 border border-gray-100/50 backdrop-blur-sm relative z-10">
+        
+        {/* Top Navigation Row */}
+        <div className="mb-6">
+          <Link 
+            href="/organizer/profile" 
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 transition-colors uppercase tracking-wider bg-red-50 px-3 py-1.5 rounded-lg"
+          >
+            ← Cancel & Return
+          </Link>
+        </div>
 
-        <h1 className="text-2xl font-bold text-center mb-6">
-          Edit Profile
-        </h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+            Edit Configuration
+          </h1>
+          <p className="text-gray-500 text-sm mt-1 font-medium">
+            Update your operational manager settings
+          </p>
+        </div>
 
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
+        <form onSubmit={handleSave} className="flex flex-col gap-5">
 
           <div>
             <label className={labelStyle}>Username</label>
@@ -104,6 +123,7 @@ export default function EditProfilePage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className={inputStyle}
+              placeholder="Enter your username"
             />
           </div>
 
@@ -113,6 +133,7 @@ export default function EditProfilePage() {
               value={orgName}
               onChange={(e) => setOrg(e.target.value)}
               className={inputStyle}
+              placeholder="Enter organization name"
             />
           </div>
 
@@ -122,6 +143,7 @@ export default function EditProfilePage() {
               value={position}
               onChange={(e) => setPos(e.target.value)}
               className={inputStyle}
+              placeholder="e.g. Tournament Director"
             />
           </div>
 
@@ -141,15 +163,16 @@ export default function EditProfilePage() {
               value={location}
               onChange={(e) => setLoc(e.target.value)}
               className={inputStyle}
+              placeholder="City, Country"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-4 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition"
+            className="w-full mt-2 text-center bg-red-600 text-white py-3.5 px-6 rounded-xl font-bold tracking-wide hover:bg-red-700 transition-all shadow-md shadow-red-600/10 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? "Saving Changes..." : "Save Changes"}
           </button>
 
         </form>
@@ -157,4 +180,3 @@ export default function EditProfilePage() {
     </main>
   );
 }
-
