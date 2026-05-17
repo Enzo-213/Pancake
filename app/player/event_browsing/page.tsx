@@ -1,178 +1,383 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client';
+import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { Montserrat } from "next/font/google";
+import { useEffect, useMemo, useState } from "react";
 
-const montserrat = Montserrat({ 
+const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-interface TournamentEvent {
-  id: number;
-  title: string;
-  type: string;
-  date: string;
-  location: string;
-  teams: string;
-  description: string;
+type PlayerTournament = {
+  id: string;
+  tournament_name: string;
+  sport: string | null;
+  category: string | null;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  venue: string | null;
+  location: string | null;
+  reg_start_date: string | null;
+  reg_end_date: string | null;
+  max_participants: number | null;
+  entry_fee: number | null;
+  status: string | null;
+};
+
+function asText(value: unknown) {
+  return typeof value === "string" ? value : null;
+}
+
+function asNumber(value: unknown) {
+  return typeof value === "number" ? value : null;
+}
+
+function normalizeTournament(row: Record<string, unknown>): PlayerTournament {
+  return {
+    id: String(row.id ?? ""),
+    tournament_name: asText(row.tournament_name) ?? "Untitled Tournament",
+    sport: asText(row.sport),
+    category: asText(row.category),
+    description: asText(row.description),
+    start_date: asText(row.start_date),
+    end_date: asText(row.end_date),
+    venue: asText(row.venue),
+    location: asText(row.location),
+    reg_start_date: asText(row.reg_start_date),
+    reg_end_date: asText(row.reg_end_date),
+    max_participants: asNumber(row.max_participants),
+    entry_fee: asNumber(row.entry_fee),
+    status: asText(row.status),
+  };
+}
+
+function formatDateRange(startDate: string | null, endDate: string | null) {
+  if (!startDate && !endDate) {
+    return "Date not set";
+  }
+
+  if (startDate && endDate) {
+    return `${startDate} to ${endDate}`;
+  }
+
+  return startDate ?? endDate ?? "Date not set";
+}
+
+function formatFee(value: number | null) {
+  if (value === null) {
+    return "Free / Not specified";
+  }
+
+  return `PHP ${value}`;
+}
+
+function formatCapacity(value: number | null) {
+  if (value === null) {
+    return "Open capacity";
+  }
+
+  return `${value} participants`;
+}
+
+function getStatusBadgeClasses(status: string | null) {
+  switch ((status ?? "").toLowerCase()) {
+    case "open":
+      return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+    case "close":
+    case "closed":
+      return "bg-orange-100 text-orange-700 border border-orange-200";
+    case "completed":
+      return "bg-blue-100 text-blue-700 border border-blue-200";
+    default:
+      return "bg-gray-100 text-gray-700 border border-gray-200";
+  }
 }
 
 export default function EventBrowsing() {
-  const [userName, setUserName] = useState<string>("Loading...");
-  const [previewEvent, setPreviewEvent] = useState<TournamentEvent | null>(null);
+  const supabase = getSupabaseBrowserClient();
 
-  const [events] = useState<TournamentEvent[]>([
-    { id: 1, title: 'Taekwondo Open', type: 'Taekwondo', date: 'April 10-15, 2026', location: 'Cebu City, PH', teams: '32 teams', description: 'Annual regional championship for all belt levels.' },
-    { id: 2, title: 'Summer Karate Bash', type: 'Karate', date: 'May 05-20, 2026', location: 'Mandaue City, PH', teams: '16 teams', description: 'Open category tournament for local community teams.' },
-    { id: 3, title: 'Grandmaster Invite', type: 'Chess', date: 'June 12, 2026', location: 'Online / Cebu', teams: '64 players', description: 'Strategic battle featuring top-rated local players.' },
-    { id: 4, title: 'Arnis Regional', type: 'Arnis', date: 'July 20, 2026', location: 'Lapu-Lapu City', teams: '20 teams', description: 'The ultimate stick fighting competition.' }
-  ]);
+  const [userName, setUserName] = useState("Loading...");
+  const [previewEvent, setPreviewEvent] = useState<PlayerTournament | null>(null);
+  const [events, setEvents] = useState<PlayerTournament[]>([]);
+  const [search, setSearch] = useState("");
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    const fetchUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
-        setUserName(data?.full_name || "User");
+    async function fetchUserProfile() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setUserName("Player");
+        return;
       }
-    };
-    fetchUserProfile();
-  }, []);
+
+      const { data } = await supabase
+        .from("player_profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      setUserName(data?.full_name || "Player");
+    }
+
+    async function fetchTournaments() {
+      setLoadingEvents(true);
+      setErrorMessage("");
+
+      const { data, error } = await supabase
+        .from("tournaments")
+        .select("*")
+        .in("status", ["open", "close", "closed", "completed"])
+        .order("start_date", { ascending: true, nullsFirst: false });
+
+      if (error) {
+        setEvents([]);
+        setErrorMessage(error.message);
+        setLoadingEvents(false);
+        return;
+      }
+
+      const normalized = (data ?? []).map((row) =>
+        normalizeTournament(row as Record<string, unknown>)
+      );
+
+      setEvents(normalized);
+      setLoadingEvents(false);
+    }
+
+    void fetchUserProfile();
+    void fetchTournaments();
+  }, [supabase]);
+
+  const filteredEvents = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return events;
+    }
+
+    return events.filter((event) =>
+      [
+        event.tournament_name,
+        event.sport,
+        event.category,
+        event.location,
+        event.venue,
+        event.description,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
+    );
+  }, [events, search]);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      {/* HERO + HEADER CONTAINER */}
-<div
-  className="relative bg-cover bg-center bg-no-repeat text-white"
-  style={{ backgroundImage: "url('/welcome-bg.png')" }}
->
-  
-
-  {/* Header Section */}
-  <header className="relative z-10 p-4 flex justify-between items-center">
-    <div className="text-xl font-bold tracking-tight text-white">
-      HuddleUp
-    </div>
-
-    <div className="flex items-center gap-3">
-      <Link 
-        href="/player/profile" 
-        className="font-medium hover:text-gray-200 transition-colors cursor-pointer"
+    <div className={`min-h-screen bg-gray-50 font-sans ${montserrat.className}`}>
+      <div
+        className="relative bg-cover bg-center bg-no-repeat text-white"
+        style={{ backgroundImage: "url('/welcome-bg.png')" }}
       >
-        {userName}
-      </Link>
+        <header className="relative z-10 flex items-center justify-between p-4">
+          <div className="text-xl font-bold tracking-tight text-white">HuddleUp</div>
 
-      <div className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white overflow-hidden shadow-sm">
-        <img 
-          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} 
-          alt="User Avatar" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-    </div>
-  </header>
-
-  {/* Hero Section */}
-  <div className="relative z-10 p-10">
-    <div className="max-w-5xl mx-auto">
-      <h1 className="text-4xl font-extrabold mb-2 text-white">
-        Find Tournaments
-      </h1>
-
-      <p className="text-lg opacity-90 mb-6 text-white">
-        Discover and join exciting tournaments near you.
-      </p>
-
-      <div className="relative max-w-lg">
-        <input 
-          type="text" 
-          placeholder="Search tournaments, sports, locations..." 
-          className="w-full p-4 pl-6 rounded-full bg-white/10 border border-white/30 text-white placeholder-white/70 outline-none shadow-lg backdrop-blur-sm focus:ring-2 focus:ring-red-300 transition-all"
-        />
-      </div>
-    </div>
-  </div>
-
-</div>
-
-      {/* Event Listings Section */}
-      <main className="p-8 max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Upcoming Tournaments</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {events.map((event) => (
-            <div 
-              key={event.id}
-              onClick={() => setPreviewEvent(event)}
-              className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-6 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group overflow-hidden relative"
+          <div className="flex items-center gap-3">
+            <Link
+              href="/player/profile"
+              className="cursor-pointer font-medium transition-colors hover:text-gray-200"
             >
-              {/* Gritty Texture Overlay: image_b0a65a.jpg */}
-              <div 
-                className="absolute inset-0 opacity-[0.04] pointer-events-none grayscale" 
-                style={{ backgroundImage: "url('/images/image_b0a65a.jpg')", backgroundSize: 'cover' }} 
-              />
-              
-              <div className="bg-red-50 p-5 rounded-2xl flex-shrink-0 group-hover:bg-[#bd1e24] transition-colors duration-300">
-                <img src="/images/gi-icon.png" alt="Icon" className="w-10 h-10 group-hover:invert transition-all" />
-              </div>
+              {userName}
+            </Link>
 
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                    <p className="text-[#bd1e24] text-[10px] font-black uppercase tracking-[0.2em]">{event.type}</p>
-                    <span className="text-[10px] font-bold text-gray-300 group-hover:text-[#bd1e24] transition-colors">VIEW DETAILS →</span>
+            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-gray-300 shadow-sm">
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
+                alt="User Avatar"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </header>
+
+        <div className="relative z-10 p-10">
+          <div className="mx-auto max-w-5xl">
+            <h1 className="mb-2 text-4xl font-extrabold text-white">
+              Find Tournaments
+            </h1>
+
+            <p className="mb-6 text-lg text-white/90">
+              Discover and join exciting tournaments near you.
+            </p>
+
+            <div className="relative max-w-lg">
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search tournaments, sports, locations..."
+                className="w-full rounded-full border border-white/30 bg-white/10 p-4 pl-6 text-white shadow-lg outline-none backdrop-blur-sm transition-all placeholder:text-white/70 focus:ring-2 focus:ring-red-300"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-5xl p-8">
+        <h2 className="mb-6 text-2xl font-bold text-gray-800">Available Tournaments</h2>
+
+        {errorMessage && (
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+            Failed to load tournaments: {errorMessage}
+          </div>
+        )}
+
+        {loadingEvents ? (
+          <div className="rounded-[32px] border border-gray-100 bg-white p-8 text-center shadow-sm">
+            <p className="font-semibold text-gray-500">Loading tournaments...</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="rounded-[32px] border border-dashed border-gray-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-xl font-bold text-gray-800">No visible tournaments yet</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Organizers need to mark tournaments as open, close, or completed before players can see them.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {filteredEvents.map((event) => (
+              <div
+                key={event.id}
+                onClick={() => setPreviewEvent(event)}
+                className="group relative flex cursor-pointer flex-col gap-6 overflow-hidden rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[0.04] grayscale"
+                  style={{ backgroundImage: "url('/images/image_b0a65a.jpg')", backgroundSize: "cover" }}
+                />
+
+                <div className="relative z-10 flex items-start gap-5">
+                  <div className="flex-shrink-0 rounded-2xl bg-red-50 p-5 transition-colors duration-300 group-hover:bg-[#bd1e24]">
+                    <img
+                      src="/images/gi-icon.png"
+                      alt="Icon"
+                      className="h-10 w-10 transition-all group-hover:invert"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#bd1e24]">
+                        {event.sport || "Tournament"}
+                      </p>
+                      <span
+                        className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeClasses(
+                          event.status
+                        )}`}
+                      >
+                        {event.status || "unknown"}
+                      </span>
+                    </div>
+
+                    <h3 className="mb-4 text-2xl font-black uppercase italic leading-tight tracking-tighter text-gray-900 transition-colors group-hover:text-[#bd1e24]">
+                      {event.tournament_name}
+                    </h3>
+
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      <div className="text-xs font-bold text-gray-500">
+                        <span className="mr-2 text-base text-[#bd1e24]">Date</span>
+                        {formatDateRange(event.start_date, event.end_date)}
+                      </div>
+                      <div className="text-xs font-bold text-gray-500">
+                        <span className="mr-2 text-base text-[#bd1e24]">Place</span>
+                        {event.location || event.venue || "Not specified"}
+                      </div>
+                      <div className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-black uppercase tracking-tighter text-gray-600 transition-colors group-hover:bg-red-50">
+                        {formatCapacity(event.max_participants)}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 mb-4 uppercase italic tracking-tighter leading-tight group-hover:text-[#bd1e24] transition-colors">
-                    {event.title}
-                </h3>
-                
-                <div className="flex flex-wrap gap-x-6 gap-y-2">
-                  <div className="flex items-center text-gray-500 text-xs font-bold">
-                    <span className="text-[#bd1e24] mr-2 text-base">📅</span> {event.date}
+
+                <div className="relative z-10 grid grid-cols-1 gap-2 border-t border-gray-100 pt-4 text-xs font-semibold text-gray-600">
+                  <div>
+                    <span className="text-gray-800">Registration:</span>{" "}
+                    {formatDateRange(event.reg_start_date, event.reg_end_date)}
                   </div>
-                  <div className="flex items-center text-gray-500 text-xs font-bold">
-                    <span className="text-[#bd1e24] mr-2 text-base">📍</span> {event.location}
-                  </div>
-                  <div className="bg-gray-100 px-3 py-1 rounded-full text-gray-600 text-[10px] font-black uppercase tracking-tighter group-hover:bg-red-50 transition-colors">
-                    👥 {event.teams}
+                  <div>
+                    <span className="text-gray-800">Entry Fee:</span> {formatFee(event.entry_fee)}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
-      {/* Modal - Dark/Gritty Theme */}
       {previewEvent && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-[#0f0f0f] rounded-[40px] border border-white/10 p-10 max-w-xl w-full overflow-hidden shadow-2xl">
-            <div 
-              className="absolute inset-0 opacity-20 pointer-events-none"
-              style={{ backgroundImage: "url('/images/image_b0a65a.jpg')", backgroundSize: 'cover' }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-xl overflow-hidden rounded-[40px] border border-white/10 bg-[#0f0f0f] p-10 shadow-2xl">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-20"
+              style={{ backgroundImage: "url('/images/image_b0a65a.jpg')", backgroundSize: "cover" }}
             />
-            
+
             <div className="relative z-10 text-white">
-              <div className="flex justify-between items-start mb-8">
+              <div className="mb-8 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[#bd1e24] font-black uppercase tracking-[0.3em] text-[10px] mb-2">Tournament Entry</p>
-                  <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">{previewEvent.title}</h2>
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#bd1e24]">
+                    Tournament Entry
+                  </p>
+                  <h2 className="text-4xl font-black uppercase italic leading-none tracking-tighter">
+                    {previewEvent.tournament_name}
+                  </h2>
                 </div>
-                <button onClick={() => setPreviewEvent(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <button
+                  onClick={() => setPreviewEvent(null)}
+                  className="rounded-full bg-white/5 p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </button>
               </div>
 
-              <div className="bg-white/5 border border-white/5 p-6 rounded-3xl mb-8">
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
-                    {previewEvent.description}
+              <div className="mb-5 flex flex-wrap gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeClasses(
+                    previewEvent.status
+                  )}`}
+                >
+                  {previewEvent.status || "unknown"}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-200">
+                  {previewEvent.sport || "Tournament"}
+                </span>
+                {previewEvent.category && (
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-200">
+                    {previewEvent.category}
+                  </span>
+                )}
+              </div>
+
+              <div className="mb-6 rounded-3xl border border-white/5 bg-white/5 p-6">
+                <p className="text-base font-medium leading-relaxed text-gray-300">
+                  {previewEvent.description || "No description has been added yet."}
                 </p>
               </div>
 
-              <button className="w-full bg-[#bd1e24] hover:bg-white hover:text-black py-5 rounded-2xl font-black text-xl transition-all shadow-[0_10px_20px_rgba(189,30,36,0.3)] uppercase italic tracking-tighter">
+              <div className="mb-8 grid grid-cols-1 gap-3 text-sm text-gray-300">
+                <p><strong>Date:</strong> {formatDateRange(previewEvent.start_date, previewEvent.end_date)}</p>
+                <p><strong>Location:</strong> {previewEvent.location || previewEvent.venue || "Not specified"}</p>
+                <p><strong>Registration:</strong> {formatDateRange(previewEvent.reg_start_date, previewEvent.reg_end_date)}</p>
+                <p><strong>Entry Fee:</strong> {formatFee(previewEvent.entry_fee)}</p>
+                <p><strong>Max Participants:</strong> {formatCapacity(previewEvent.max_participants)}</p>
+              </div>
+
+              <button className="w-full rounded-2xl bg-[#bd1e24] py-5 text-xl font-black uppercase italic tracking-tighter shadow-[0_10px_20px_rgba(189,30,36,0.3)] transition-all hover:bg-white hover:text-black">
                 Enter The Arena
               </button>
             </div>

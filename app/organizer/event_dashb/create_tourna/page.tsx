@@ -49,6 +49,108 @@ const initialData: TournamentData = {
   rules: "",
 };
 
+type InputFieldProps = {
+  label: string;
+  name: keyof TournamentData;
+  value: string;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
+  type?: string;
+  placeholder?: string;
+  icon?: React.ReactNode;
+};
+
+function InputField({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  icon,
+}: InputFieldProps) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="mb-0.5 ml-1 text-xs font-bold uppercase tracking-wider text-gray-600">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
+        />
+        {icon && (
+          <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+            {icon}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type PreviewItemProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+};
+
+function PreviewItem({ icon, label, value }: PreviewItemProps) {
+  return (
+    <div className="group flex items-center justify-between border-b border-dashed border-gray-100 py-3 text-sm last:border-0">
+      <div className="flex items-center gap-3 text-gray-500">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600 transition-transform group-hover:scale-105">
+          {icon}
+        </div>
+        <span className="text-xs font-medium uppercase tracking-wider text-gray-500">
+          {label}
+        </span>
+      </div>
+      <span
+        className={`max-w-[140px] truncate text-sm font-bold ${
+          value === "Not Specified"
+            ? "font-normal italic text-gray-400"
+            : "text-gray-900"
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function asNullableString(value: string) {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+function asNullableDate(value: string) {
+  return value === "" ? null : value;
+}
+
+function asNullableInt(value: string) {
+  if (value.trim() === "") {
+    return null;
+  }
+
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function asNullableFloat(value: string) {
+  if (value.trim() === "") {
+    return null;
+  }
+
+  const parsed = parseFloat(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 export default function CreateTournamentPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -113,68 +215,60 @@ export default function CreateTournamentPage() {
     if (!user) return;
     
     setIsSubmitting(true);
-    
-    const { error } = await supabase
-      .from("tournaments") 
-      .insert({
-        tournament_name: formData.name,
-        sport: formData.sport,
-        tournament_type: formData.type,
-        category: formData.category,
-        description: formData.description,
-        start_date: formData.startDate,
-        end_date: formData.endDate,
-        venue: formData.venue,
-        location: formData.location,
-        reg_start_date: formData.regStartDate,
-        reg_end_date: formData.regEndDate,
-        max_participants: parseInt(formData.maxParticipants) || 0,
-        entry_fee: parseFloat(formData.entryFee) || 0,
-        rules_guidelines: formData.rules,
-        organizer_id: user.id, // Linking to the authenticated user
-        status: "draft"
-      });
+
+    const payload: Record<string, string | number | null> = {
+      tournament_name: formData.name.trim(),
+      sport: asNullableString(formData.sport),
+      tournament_type: asNullableString(formData.type),
+      category: asNullableString(formData.category),
+      description: asNullableString(formData.description),
+      start_date: asNullableDate(formData.startDate),
+      end_date: asNullableDate(formData.endDate),
+      venue: asNullableString(formData.venue),
+      location: asNullableString(formData.location),
+      reg_start_date: asNullableDate(formData.regStartDate),
+      reg_end_date: asNullableDate(formData.regEndDate),
+      max_participants: asNullableInt(formData.maxParticipants),
+      entry_fee: asNullableFloat(formData.entryFee),
+      rules_guidelines: asNullableString(formData.rules),
+      organizer_id: user.id,
+      status: "draft",
+    };
+
+    let insertPayload = { ...payload };
+    let error: { message: string } | null = null;
+
+    // If the local code and Supabase table drift, strip unknown columns one by one
+    // so organizers can still create a tournament with the columns that do exist.
+    while (Object.keys(insertPayload).length > 0) {
+      const result = await supabase.from("tournaments").insert(insertPayload);
+      error = result.error;
+
+      if (!error) {
+        break;
+      }
+
+      const missingColumnMatch = error.message.match(/Could not find the '([^']+)' column/i);
+      if (!missingColumnMatch) {
+        break;
+      }
+
+      const missingColumn = missingColumnMatch[1];
+      if (!(missingColumn in insertPayload)) {
+        break;
+      }
+
+      delete insertPayload[missingColumn];
+    }
 
     if (error) {
       alert("Error: " + error.message);
       setIsSubmitting(false);
     } else {
       alert("Tournament Created Successfully!");
-      router.push("/organizer/dashboard");
+      router.push("/organizer/event_dashb");
     }
   };
-
-  // Reusable Components
-  const InputField = ({ label, name, type = "text", placeholder, icon }: any) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-0.5 ml-1">{label}</label>
-      <div className="relative">
-        <input
-          type={type}
-          name={name}
-          value={formData[name as keyof TournamentData]}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all shadow-sm text-sm"
-        />
-        {icon && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">{icon}</div>}
-      </div>
-    </div>
-  );
-
-  const PreviewItem = ({ icon, label, value }: any) => (
-    <div className="flex justify-between items-center text-sm py-3 border-b border-dashed border-gray-100 last:border-0 group">
-      <div className="flex items-center gap-3 text-gray-500">
-        <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-105 transition-transform">
-          {icon}
-        </div>
-        <span className="font-medium text-gray-500 text-xs uppercase tracking-wider">{label}</span>
-      </div>
-      <span className={`font-bold text-sm truncate max-w-[140px] ${value === "Not Specified" ? "text-gray-400 italic font-normal" : "text-gray-900"}`}>
-        {value}
-      </span>
-    </div>
-  );
 
   if (loadingAuth) {
     return (
@@ -221,13 +315,20 @@ export default function CreateTournamentPage() {
                 Basic Information
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                <InputField label="Tournament Name" name="name" placeholder="Enter Tournament Name" />
+                <InputField
+                  label="Tournament Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter Tournament Name"
+                />
                 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-0.5 ml-1">Sport</label>
                   <div className="relative">
                     <select 
                       name="sport" 
+                      value={formData.sport}
                       onChange={handleInputChange} 
                       className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all shadow-sm text-sm appearance-none"
                     >
@@ -239,13 +340,26 @@ export default function CreateTournamentPage() {
                   </div>
                 </div>
 
-                <InputField label="Tournament Type" name="type" placeholder="e.g. Open Championship" />
-                <InputField label="Tournament Category" name="category" placeholder="e.g. Senior Kumite" />
+                <InputField
+                  label="Tournament Type"
+                  name="type"
+                  value={formData.type}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Open Championship"
+                />
+                <InputField
+                  label="Tournament Category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Senior Kumite"
+                />
                 
                 <div className="md:col-span-2 flex flex-col gap-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-0.5 ml-1">Description</label>
                   <textarea 
                     name="description" 
+                    value={formData.description}
                     onChange={handleInputChange} 
                     rows={4} 
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all shadow-sm text-sm resize-none" 
@@ -261,10 +375,100 @@ export default function CreateTournamentPage() {
                 Date & Location
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                <InputField label="Start Date" name="startDate" type="date" icon={<CalendarDays size={18}/>} />
-                <InputField label="End Date" name="endDate" type="date" icon={<CalendarDays size={18}/>} />
-                <InputField label="Venue" name="venue" placeholder="Enter Venue Location" />
-                <InputField label="Location" name="location" placeholder="City, Country" icon={<MapPin size={18} />} />
+                <InputField
+                  label="Start Date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                  type="date"
+                  icon={<CalendarDays size={18} />}
+                />
+                <InputField
+                  label="End Date"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleInputChange}
+                  type="date"
+                  icon={<CalendarDays size={18} />}
+                />
+                <InputField
+                  label="Venue"
+                  name="venue"
+                  value={formData.venue}
+                  onChange={handleInputChange}
+                  placeholder="Enter Venue Location"
+                />
+                <InputField
+                  label="Location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  placeholder="City, Country"
+                  icon={<MapPin size={18} />}
+                />
+              </div>
+            </section>
+
+            <section className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight border-b pb-3 border-gray-100">
+                Registration & Capacity
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <InputField
+                  label="Registration Open"
+                  name="regStartDate"
+                  value={formData.regStartDate}
+                  onChange={handleInputChange}
+                  type="date"
+                  icon={<CalendarDays size={18} />}
+                />
+                <InputField
+                  label="Registration Close"
+                  name="regEndDate"
+                  value={formData.regEndDate}
+                  onChange={handleInputChange}
+                  type="date"
+                  icon={<CalendarDays size={18} />}
+                />
+                <InputField
+                  label="Max Capacity"
+                  name="maxParticipants"
+                  value={formData.maxParticipants}
+                  onChange={handleInputChange}
+                  type="number"
+                  placeholder="Enter max participants"
+                  icon={<Users size={18} />}
+                />
+                <InputField
+                  label="Entry Fee (PHP)"
+                  name="entryFee"
+                  value={formData.entryFee}
+                  onChange={handleInputChange}
+                  type="number"
+                  placeholder="Enter fee amount in PHP"
+                  icon={<CircleDollarSign size={18} />}
+                />
+              </div>
+            </section>
+
+            <section className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight border-b pb-3 border-gray-100">
+                Rules & Guidelines
+              </h2>
+              <div className="grid grid-cols-1 gap-y-5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-0.5 ml-1">
+                    Rules
+                  </label>
+                  <textarea
+                    name="rules"
+                    value={formData.rules}
+                    onChange={handleInputChange}
+                    rows={5}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all shadow-sm text-sm resize-none"
+                    placeholder="Enter tournament rules, match format, safety reminders, and other guidelines..."
+                  />
+                </div>
               </div>
             </section>
 
@@ -312,7 +516,11 @@ export default function CreateTournamentPage() {
               <PreviewItem icon={<PlusCircle size={15}/>} label="Venue" value={formData.venue || "Not Specified"} />
               <PreviewItem icon={<MapPin size={15}/>} label="Location" value={formData.location || "Not Specified"} />
               <PreviewItem icon={<Users size={15}/>} label="Capacity" value={formData.maxParticipants || "Not Specified"} />
-              <PreviewItem icon={<CircleDollarSign size={15}/>} label="Fee" value={formData.entryFee ? `$${formData.entryFee}` : "Not Specified"} />
+              <PreviewItem
+                icon={<CircleDollarSign size={15} />}
+                label="Fee"
+                value={formData.entryFee ? `PHP ${formData.entryFee}` : "Not Specified"}
+              />
             </div>
           </aside>
 

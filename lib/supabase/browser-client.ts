@@ -111,6 +111,66 @@ export type Database = {
           status?: string | null;
         };
       };
+
+      tournaments: {
+        Row: {
+          id: string;
+          organizer_id: string;
+          tournament_name: string;
+          sport: string | null;
+          tournament_type: string | null;
+          category: string | null;
+          description: string | null;
+          start_date: string | null;
+          end_date: string | null;
+          venue: string | null;
+          location: string | null;
+          reg_start_date: string | null;
+          reg_end_date: string | null;
+          max_participants: number | null;
+          entry_fee: number | null;
+          rules_guidelines: string | null;
+          status: string | null;
+        };
+        Insert: {
+          id?: string;
+          organizer_id: string;
+          tournament_name: string;
+          sport?: string | null;
+          tournament_type?: string | null;
+          category?: string | null;
+          description?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          venue?: string | null;
+          location?: string | null;
+          reg_start_date?: string | null;
+          reg_end_date?: string | null;
+          max_participants?: number | null;
+          entry_fee?: number | null;
+          rules_guidelines?: string | null;
+          status?: string | null;
+        };
+        Update: {
+          id?: string;
+          organizer_id?: string;
+          tournament_name?: string;
+          sport?: string | null;
+          tournament_type?: string | null;
+          category?: string | null;
+          description?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          venue?: string | null;
+          location?: string | null;
+          reg_start_date?: string | null;
+          reg_end_date?: string | null;
+          max_participants?: number | null;
+          entry_fee?: number | null;
+          rules_guidelines?: string | null;
+          status?: string | null;
+        };
+      };
     };
   };
 };
