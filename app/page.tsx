@@ -6,30 +6,36 @@ export default function Home(): JSX.Element {
       
       <section className="text-center space-y-6">
         
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-wide font-monteserrat italic">
-          READY TO PLAY?
-        </h1>
+        <div className="space-y-1">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-wide font-montserrat italic">
+            READY TO PLAY?
+          </h1>
 
-        <p className="text-white/80 text-sm md:text-base tracking-[0.2em] font-inter">
-          COMPETE ACROSS MULTIPLE SPORT
-        </p>
+          <p className="text-white/90 text-xs md:text-sm tracking-[0.15em] font-light uppercase">
+            Compete across multiple sport
+          </p>
+        </div>
 
         <div className="mt-8 flex flex-col items-center gap-4">
           
           <Link
-            href="/register"
-            className="w-72 flex items-center justify-left gap-3 bg-white text-red-600 px-6 py-4 rounded-xl text-lg font-semibold shadow-lg hover:scale-105 active:scale-95 transition"
+            href="/register" 
+            className="w-72 md:w-80 flex items-center bg-white px-6 py-3.5 rounded-lg shadow-lg hover:scale-105 active:scale-95 transition"
           >
-            <img src="/sign-up-icon.png" alt="Sign Up Icon" className="w-6 h-6 scale-200" />
-            Register / Sign-up
+            <img src="/sign-up-icon.png" alt="Sign Up Icon" className="w-6 h-6 object-contain" />
+            <span className="flex-1 text-center text-[#e60000] text-lg font-semibold pr-6">
+              Register / Sign-up
+            </span>
           </Link>
 
           <Link
-            href="/login"
-            className="w-72 flex items-center justify-left gap-3 bg-gray-200 text-gray-700 px-6 py-4 rounded-xl text-lg font-semibold shadow-lg hover:scale-105 active:scale-95 transition"
+            href="/login" 
+            className="w-72 md:w-80 flex items-center bg-white px-6 py-3.5 rounded-lg shadow-lg hover:scale-105 active:scale-95 transition"
           >
-            <img src="/login-icon.png" alt="Log In Icon" className="w-6 h-6 scale-200" />
-            Log in
+            <img src="/login-icon.png" alt="Login Icon" className="w-6 h-6 object-contain opacity-80" />
+            <span className="flex-1 text-center text-gray-800 text-lg font-semibold pr-6">
+              Log in
+            </span>
           </Link>
 
         </div>
