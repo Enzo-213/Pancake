@@ -33,6 +33,11 @@ type OrganizerTournament = {
   status: string | null;
 };
 
+interface PlayerTournaCountRow {
+  tournament_id: number;
+  status: string;
+}
+
 export default function OrganizerProfilePage() {
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();
@@ -79,7 +84,9 @@ export default function OrganizerProfilePage() {
         .select("tournament_id, status");
 
       if (!joinCountResult.error) {
-        const counts = (joinCountResult.data ?? []).reduce<Record<number, number>>(
+        const rows = (joinCountResult.data as PlayerTournaCountRow[]) ?? [];
+
+        const counts = rows.reduce<Record<number, number>>(
           (accumulator, row) => {
             const tournamentId =
               typeof row.tournament_id === "number" ? row.tournament_id : null;
@@ -97,10 +104,12 @@ export default function OrganizerProfilePage() {
         setJoinedCounts(counts);
       }
 
-      if (data?.organization_certificate) {
+      const profileData = data as any;
+
+      if (profileData?.organization_certificate) {
         const { data: signedData, error: signedError } = await supabase.storage
           .from("certificates")
-          .createSignedUrl(data.organization_certificate, 60);
+          .createSignedUrl(profileData.organization_certificate, 60);
 
         if (signedError) {
           console.error("SIGNED URL ERROR:", signedError.message);

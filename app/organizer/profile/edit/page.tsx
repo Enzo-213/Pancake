@@ -72,7 +72,7 @@ export default function EditProfilePage() {
       return;
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("organizer_profiles")
       .update({
         username,

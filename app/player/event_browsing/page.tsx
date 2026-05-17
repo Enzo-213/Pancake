@@ -190,7 +190,7 @@ export default function EventBrowsing() {
         return;
       }
 
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("player_profiles")
         .select("full_name, email")
         .eq("id", user.id)
@@ -327,7 +327,7 @@ export default function EventBrowsing() {
 
     setJoiningCategory(selectedCategory);
 
-    const { error } = await supabase.from("player_tourna").insert({
+    const { error } = await (supabase.from("player_tourna") as any).insert({
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
       username: playerIdentity.full_name || userName,

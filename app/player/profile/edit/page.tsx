@@ -71,7 +71,7 @@ export default function EditProfilePage() {
       return;
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("player_profiles")
       .update({
         full_name: username,
