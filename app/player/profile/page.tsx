@@ -47,6 +47,21 @@ type JoinedTournament = {
   selected_category: string | null;
 };
 
+interface PlayerTournaRow {
+  tournament_id: number;
+  selected_category?: string | null;
+  status: string;
+  player_id?: string;
+}
+
+interface TournamentRow {
+  id: number;
+  tournament_name: string;
+  sport: string;
+  start_date: string | null;
+  max_participants: number | null;
+}
+
 export default function PlayerProfilePage() {
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();
@@ -90,20 +105,22 @@ export default function PlayerProfilePage() {
         .eq("status", "joined");
 
       if (!joinResult.error) {
-        const joinedRows = joinResult.data ?? [];
+        const joinedRows = (joinResult.data as PlayerTournaRow[]) ?? [];
         const tournamentIds = joinedRows
           .map((row) => row.tournament_id)
           .filter((id): id is number => typeof id === "number");
 
         if (tournamentIds.length > 0) {
-          const tournamentsResult = await supabase
+          const tournamentsResult = await (supabase as any)
             .from("tournaments")
             .select("id, tournament_name, sport, start_date, max_participants")
             .in("id", tournamentIds);
 
           if (!tournamentsResult.error) {
+            const tournamentsData = (tournamentsResult.data as TournamentRow[]) ?? [];
+
             const merged = tournamentIds.map((tournamentId) => {
-              const tournament = (tournamentsResult.data ?? []).find(
+              const tournament = tournamentsData.find(
                 (entry) => entry.id === tournamentId
               );
               const joinRow = joinedRows.find(
@@ -133,7 +150,9 @@ export default function PlayerProfilePage() {
         .select("tournament_id, status");
 
       if (!countResult.error) {
-        const counts = (countResult.data ?? []).reduce<Record<number, number>>(
+        const countRows = (countResult.data as PlayerTournaRow[]) ?? [];
+
+        const counts = countRows.reduce<Record<number, number>>(
           (accumulator, row) => {
             const tournamentId =
               typeof row.tournament_id === "number" ? row.tournament_id : null;
@@ -308,34 +327,58 @@ export default function PlayerProfilePage() {
             Joined Tournaments
           </h3>
           <div className="grid md:grid-cols-2 gap-6">
-            {(joinedTournaments.length > 0 ? joinedTournaments : upcomingMatches).map((match, i) => (
-              <div
-                key={"id" in match ? match.id : i}
-                className="bg-white/95 backdrop-blur-sm rounded-full p-4 pl-8 flex items-center justify-between shadow-2xl border border-white"
-              >
-                <div className="flex items-center gap-5">
-                  <div className="bg-red-50 p-2.5 rounded-full shadow-inner">
-                    <img src="/images/kick-icon.png" className="w-8 h-8" alt="sport" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800 text-lg leading-tight">
-                      {"tournament_name" in match ? match.tournament_name : match.event}
-                    </h4>
-                    <p className="text-xs text-gray-500 font-bold uppercase">
-                      {"sport" in match ? match.sport : match.sport} • {"start_date" in match ? match.start_date || "Date not set" : match.date}
-                    </p>
-                    {"selected_category" in match && (
+            {joinedTournaments.length > 0 ? (
+              joinedTournaments.map((match) => (
+                <div
+                  key={match.id}
+                  className="bg-white/95 backdrop-blur-sm rounded-full p-4 pl-8 flex items-center justify-between shadow-2xl border border-white"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="bg-red-50 p-2.5 rounded-full shadow-inner">
+                      <img src="/images/kick-icon.png" className="w-8 h-8" alt="sport" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg leading-tight">
+                        {match.tournament_name}
+                      </h4>
+                      <p className="text-xs text-gray-500 font-bold uppercase">
+                        {match.sport} • {match.start_date || "Date not set"}
+                      </p>
                       <p className="text-[10px] text-red-600 font-bold uppercase mt-1">
                         {match.selected_category || "Joined"} • {getSlotsLeft(match)}
                       </p>
-                    )}
+                    </div>
+                  </div>
+                  <div className="pr-8">
+                    <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                   </div>
                 </div>
-                <div className="pr-8">
-                  <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+              ))
+            ) : (
+              upcomingMatches.map((match, i) => (
+                <div
+                  key={i}
+                  className="bg-white/95 backdrop-blur-sm rounded-full p-4 pl-8 flex items-center justify-between shadow-2xl border border-white"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="bg-red-50 p-2.5 rounded-full shadow-inner">
+                      <img src="/images/kick-icon.png" className="w-8 h-8" alt="sport" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg leading-tight">
+                        {match.event}
+                      </h4>
+                      <p className="text-xs text-gray-500 font-bold uppercase">
+                        {match.sport} • {match.date}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pr-8">
+                    <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
       </div>

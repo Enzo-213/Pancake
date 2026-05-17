@@ -234,7 +234,7 @@ export default function CreateTournamentPage() {
     
     setIsSubmitting(true);
 
-    const payload: Record<string, string | number | null> = {
+    const payload: Record<string, string | number | boolean | null> = {
       tournament_name: formData.name.trim(),
       sport: asNullableString(formData.sport),
       tournament_type: asNullableString(formData.type),
@@ -262,7 +262,7 @@ export default function CreateTournamentPage() {
     // If the local code and Supabase table drift, strip unknown columns one by one
     // so organizers can still create a tournament with the columns that do exist.
     while (Object.keys(insertPayload).length > 0) {
-      const result = await supabase
+      const result = await (supabase as any)
         .from("tournaments")
         .insert(insertPayload)
         .select("id")
@@ -293,7 +293,7 @@ export default function CreateTournamentPage() {
       setIsSubmitting(false);
     } else {
       if (createdTournamentId !== null) {
-        const organizerMirrorError = await supabase
+        const organizerMirrorError = await (supabase as any)
           .from("organizer_tourna")
           .insert({
             id: crypto.randomUUID(),
