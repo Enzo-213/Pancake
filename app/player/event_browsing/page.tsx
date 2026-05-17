@@ -11,7 +11,7 @@ const montserrat = Montserrat({
 });
 
 type PlayerTournament = {
-  id: string;
+  id: number;
   tournament_name: string;
   sport: string | null;
   category: string | null;
@@ -37,7 +37,7 @@ function asNumber(value: unknown) {
 
 function normalizeTournament(row: Record<string, unknown>): PlayerTournament {
   return {
-    id: String(row.id ?? ""),
+    id: asNumber(row.id) ?? 0,
     tournament_name: asText(row.tournament_name) ?? "Untitled Tournament",
     sport: asText(row.sport),
     category: asText(row.category),
@@ -83,7 +83,7 @@ function formatCapacity(value: number | null) {
 }
 
 function getStatusBadgeClasses(status: string | null) {
-  switch ((status ?? "").toLowerCase()) {
+  switch (normalizeStatus(status)) {
     case "open":
       return "bg-emerald-100 text-emerald-700 border border-emerald-200";
     case "close":
@@ -93,6 +93,24 @@ function getStatusBadgeClasses(status: string | null) {
       return "bg-blue-100 text-blue-700 border border-blue-200";
     default:
       return "bg-gray-100 text-gray-700 border border-gray-200";
+  }
+}
+
+function normalizeStatus(status: string | null) {
+  const normalized = (status ?? "").toLowerCase();
+  return normalized === "closed" ? "close" : normalized;
+}
+
+function getStatusLabel(status: string | null) {
+  switch (normalizeStatus(status)) {
+    case "open":
+      return "Open";
+    case "close":
+      return "Closed";
+    case "completed":
+      return "Completed";
+    default:
+      return "Unknown";
   }
 }
 
@@ -130,11 +148,23 @@ export default function EventBrowsing() {
       setLoadingEvents(true);
       setErrorMessage("");
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("tournaments")
         .select("*")
         .in("status", ["open", "close", "closed", "completed"])
         .order("start_date", { ascending: true, nullsFirst: false });
+
+      // Soft fallback for deployments where the status column has not been added yet.
+      // We still show tournaments instead of hard-failing the whole page.
+      if (error?.message.includes('column "status" does not exist')) {
+        const fallback = await supabase
+          .from("tournaments")
+          .select("*")
+          .order("start_date", { ascending: true, nullsFirst: false });
+
+        data = fallback.data;
+        error = fallback.error;
+      }
 
       if (error) {
         setEvents([]);
@@ -143,9 +173,9 @@ export default function EventBrowsing() {
         return;
       }
 
-      const normalized = (data ?? []).map((row) =>
-        normalizeTournament(row as Record<string, unknown>)
-      );
+      const normalized = (data ?? [])
+        .map((row) => normalizeTournament(row as Record<string, unknown>))
+        .filter((event) => normalizeStatus(event.status) !== "draft");
 
       setEvents(normalized);
       setLoadingEvents(false);
@@ -278,7 +308,7 @@ export default function EventBrowsing() {
                           event.status
                         )}`}
                       >
-                        {event.status || "unknown"}
+                        {getStatusLabel(event.status)}
                       </span>
                     </div>
 
@@ -351,7 +381,7 @@ export default function EventBrowsing() {
                     previewEvent.status
                   )}`}
                 >
-                  {previewEvent.status || "unknown"}
+                  {getStatusLabel(previewEvent.status)}
                 </span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-200">
                   {previewEvent.sport || "Tournament"}

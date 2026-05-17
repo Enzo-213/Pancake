@@ -9,7 +9,7 @@ type UserProfile = {
 };
 
 type TournamentRecord = {
-  id: string;
+  id: number;
   tournament_name: string;
   sport: string | null;
   tournament_type: string | null;
@@ -56,7 +56,7 @@ function asNumber(value: unknown) {
 
 function normalizeTournamentRecord(row: Record<string, unknown>): TournamentRecord {
   return {
-    id: String(row.id ?? ""),
+    id: asNumber(row.id) ?? 0,
     tournament_name: asText(row.tournament_name) ?? "Untitled Tournament",
     sport: asText(row.sport),
     tournament_type: asText(row.tournament_type),
@@ -115,15 +115,6 @@ function asNullableInt(value: string) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function asNullableFloat(value: string) {
-  if (value.trim() === "") {
-    return null;
-  }
-
-  const parsed = parseFloat(value);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
 function formatDateRange(startDate: string | null, endDate: string | null) {
   if (!startDate && !endDate) {
     return "Date not set";
@@ -164,10 +155,29 @@ function formatRegistrationWindow(startDate: string | null, endDate: string | nu
   return startDate ?? endDate ?? "Not set";
 }
 
+function normalizeStatus(status: string | null) {
+  const normalized = (status ?? "draft").toLowerCase();
+  return normalized === "closed" ? "close" : normalized;
+}
+
+function getStatusLabel(status: string | null) {
+  switch (normalizeStatus(status)) {
+    case "open":
+      return "Open";
+    case "close":
+      return "Closed";
+    case "completed":
+      return "Completed";
+    default:
+      return "Draft";
+  }
+}
+
 function getStatusBadgeClasses(status: string | null) {
-  switch ((status ?? "draft").toLowerCase()) {
+  switch (normalizeStatus(status)) {
     case "open":
       return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+    case "close":
     case "closed":
       return "bg-orange-100 text-orange-700 border border-orange-200";
     case "completed":
@@ -340,7 +350,7 @@ export default function EventDashboardPage() {
       reg_start_date: asNullableDate(editForm.reg_start_date),
       reg_end_date: asNullableDate(editForm.reg_end_date),
       max_participants: asNullableInt(editForm.max_participants),
-      entry_fee: asNullableFloat(editForm.entry_fee),
+      entry_fee: asNullableInt(editForm.entry_fee),
       rules_guidelines: asNullableString(editForm.rules_guidelines),
       status: asNullableString(editForm.status) ?? "draft",
     };
@@ -522,7 +532,7 @@ export default function EventDashboardPage() {
                             event.status
                           )}`}
                         >
-                          {event.status || "draft"}
+                          {getStatusLabel(event.status)}
                         </span>
                       </div>
                     </div>
@@ -582,7 +592,7 @@ export default function EventDashboardPage() {
                     previewEvent.status
                   )}`}
                 >
-                  {previewEvent.status || "draft"}
+                  {getStatusLabel(previewEvent.status)}
                 </span>
               </div>
 

@@ -114,7 +114,7 @@ export type Database = {
 
       tournaments: {
         Row: {
-          id: string;
+          id: number;
           organizer_id: string;
           tournament_name: string;
           sport: string | null;
@@ -133,7 +133,7 @@ export type Database = {
           status: string | null;
         };
         Insert: {
-          id?: string;
+          id?: number;
           organizer_id: string;
           tournament_name: string;
           sport?: string | null;
@@ -152,7 +152,7 @@ export type Database = {
           status?: string | null;
         };
         Update: {
-          id?: string;
+          id?: number;
           organizer_id?: string;
           tournament_name?: string;
           sport?: string | null;

@@ -142,15 +142,6 @@ function asNullableInt(value: string) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function asNullableFloat(value: string) {
-  if (value.trim() === "") {
-    return null;
-  }
-
-  const parsed = parseFloat(value);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
 export default function CreateTournamentPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -229,7 +220,7 @@ export default function CreateTournamentPage() {
       reg_start_date: asNullableDate(formData.regStartDate),
       reg_end_date: asNullableDate(formData.regEndDate),
       max_participants: asNullableInt(formData.maxParticipants),
-      entry_fee: asNullableFloat(formData.entryFee),
+      entry_fee: asNullableInt(formData.entryFee),
       rules_guidelines: asNullableString(formData.rules),
       organizer_id: user.id,
       status: "draft",
