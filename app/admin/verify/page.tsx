@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+export const dynamic = "force-dynamic"; // force next.js to treat page as dynamic runtime only
 
 type VerificationStatus = "pending" | "verified" | "rejected";
 
