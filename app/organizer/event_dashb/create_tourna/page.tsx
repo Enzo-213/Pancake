@@ -30,6 +30,8 @@ type TournamentData = {
   maxParticipants: string;
   entryFee: string;
   rules: string;
+  allowKata: boolean;
+  allowKumite: boolean;
 };
 
 const initialData: TournamentData = {
@@ -47,6 +49,8 @@ const initialData: TournamentData = {
   maxParticipants: "",
   entryFee: "",
   rules: "",
+  allowKata: true,
+  allowKumite: true,
 };
 
 type InputFieldProps = {
@@ -142,6 +146,22 @@ function asNullableInt(value: string) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function formatAllowedCategories(allowKata: boolean, allowKumite: boolean) {
+  if (allowKata && allowKumite) {
+    return "Kata, Kumite";
+  }
+
+  if (allowKata) {
+    return "Kata";
+  }
+
+  if (allowKumite) {
+    return "Kumite";
+  }
+
+  return "Not specified";
+}
+
 export default function CreateTournamentPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -202,6 +222,13 @@ export default function CreateTournamentPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCategoryToggle = (name: "allowKata" | "allowKumite") => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
+  };
+
   const handleCreate = async () => {
     if (!user) return;
     
@@ -224,18 +251,27 @@ export default function CreateTournamentPage() {
       rules_guidelines: asNullableString(formData.rules),
       organizer_id: user.id,
       status: "draft",
+      allow_kata: formData.allowKata,
+      allow_kumite: formData.allowKumite,
     };
 
     const insertPayload = { ...payload };
     let error: { message: string } | null = null;
+    let createdTournamentId: number | null = null;
 
     // If the local code and Supabase table drift, strip unknown columns one by one
     // so organizers can still create a tournament with the columns that do exist.
     while (Object.keys(insertPayload).length > 0) {
-      const result = await supabase.from("tournaments").insert(insertPayload);
+      const result = await supabase
+        .from("tournaments")
+        .insert(insertPayload)
+        .select("id")
+        .single();
       error = result.error;
 
       if (!error) {
+        createdTournamentId =
+          typeof result.data?.id === "number" ? result.data.id : null;
         break;
       }
 
@@ -256,6 +292,24 @@ export default function CreateTournamentPage() {
       alert("Error: " + error.message);
       setIsSubmitting(false);
     } else {
+      if (createdTournamentId !== null) {
+        const organizerMirrorError = await supabase
+          .from("organizer_tourna")
+          .insert({
+            id: crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            organizer: user.email ?? user.id,
+            tourna_name: formData.name.trim(),
+            email: user.email ?? null,
+            organizer_id: user.id,
+            tournament_id: createdTournamentId,
+          });
+
+        if (organizerMirrorError.error) {
+          console.warn("Organizer mirror insert failed:", organizerMirrorError.error.message);
+        }
+      }
+
       alert("Tournament Created Successfully!");
       router.push("/organizer/event_dashb");
     }
@@ -444,6 +498,42 @@ export default function CreateTournamentPage() {
 
             <section className="space-y-6">
               <h2 className="text-xl font-bold text-gray-900 tracking-tight border-b pb-3 border-gray-100">
+                Allowed Competition Categories
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryToggle("allowKata")}
+                  className={`rounded-2xl border px-5 py-4 text-left transition ${
+                    formData.allowKata
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-gray-200 bg-white text-gray-500"
+                  }`}
+                >
+                  <p className="text-sm font-bold uppercase tracking-wider">Kata</p>
+                  <p className="mt-1 text-xs font-medium">
+                    {formData.allowKata ? "Players can join Kata." : "Kata is disabled."}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCategoryToggle("allowKumite")}
+                  className={`rounded-2xl border px-5 py-4 text-left transition ${
+                    formData.allowKumite
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-gray-200 bg-white text-gray-500"
+                  }`}
+                >
+                  <p className="text-sm font-bold uppercase tracking-wider">Kumite</p>
+                  <p className="mt-1 text-xs font-medium">
+                    {formData.allowKumite ? "Players can join Kumite." : "Kumite is disabled."}
+                  </p>
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight border-b pb-3 border-gray-100">
                 Rules & Guidelines
               </h2>
               <div className="grid grid-cols-1 gap-y-5">
@@ -511,6 +601,11 @@ export default function CreateTournamentPage() {
                 icon={<CircleDollarSign size={15} />}
                 label="Fee"
                 value={formData.entryFee ? `PHP ${formData.entryFee}` : "Not Specified"}
+              />
+              <PreviewItem
+                icon={<Search size={15} />}
+                label="Allowed"
+                value={formatAllowedCategories(formData.allowKata, formData.allowKumite)}
               />
             </div>
           </aside>

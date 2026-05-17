@@ -26,6 +26,8 @@ type TournamentRecord = {
   rules_guidelines: string | null;
   status: string | null;
   organizer_id: string;
+  allow_kata: boolean;
+  allow_kumite: boolean;
 };
 
 type EditableTournament = {
@@ -44,6 +46,8 @@ type EditableTournament = {
   entry_fee: string;
   rules_guidelines: string;
   status: string;
+  allow_kata: boolean;
+  allow_kumite: boolean;
 };
 
 function asText(value: unknown) {
@@ -52,6 +56,10 @@ function asText(value: unknown) {
 
 function asNumber(value: unknown) {
   return typeof value === "number" ? value : null;
+}
+
+function asBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : false;
 }
 
 function normalizeTournamentRecord(row: Record<string, unknown>): TournamentRecord {
@@ -73,6 +81,8 @@ function normalizeTournamentRecord(row: Record<string, unknown>): TournamentReco
     rules_guidelines: asText(row.rules_guidelines),
     status: asText(row.status),
     organizer_id: String(row.organizer_id ?? ""),
+    allow_kata: asBoolean(row.allow_kata),
+    allow_kumite: asBoolean(row.allow_kumite),
   };
 }
 
@@ -94,6 +104,8 @@ function toEditableTournament(tournament: TournamentRecord): EditableTournament 
     entry_fee: tournament.entry_fee === null ? "" : String(tournament.entry_fee),
     rules_guidelines: tournament.rules_guidelines ?? "",
     status: tournament.status ?? "draft",
+    allow_kata: tournament.allow_kata,
+    allow_kumite: tournament.allow_kumite,
   };
 }
 
@@ -153,6 +165,22 @@ function formatRegistrationWindow(startDate: string | null, endDate: string | nu
   }
 
   return startDate ?? endDate ?? "Not set";
+}
+
+function formatAllowedCategories(allowKata: boolean, allowKumite: boolean) {
+  if (allowKata && allowKumite) {
+    return "Kata, Kumite";
+  }
+
+  if (allowKata) {
+    return "Kata";
+  }
+
+  if (allowKumite) {
+    return "Kumite";
+  }
+
+  return "Not specified";
 }
 
 function normalizeStatus(status: string | null) {
@@ -238,6 +266,43 @@ export default function EventDashboardPage() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [savingEdit, setSavingEdit] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [joinedCounts, setJoinedCounts] = useState<Record<number, number>>({});
+
+  async function loadJoinCounts() {
+    const { data, error } = await supabase
+      .from("player_tourna")
+      .select("tournament_id, status");
+
+    if (error) {
+      console.error("Failed to load join counts:", error.message);
+      return;
+    }
+
+    const counts = (data ?? []).reduce<Record<number, number>>((accumulator, row) => {
+      const tournamentId =
+        typeof row.tournament_id === "number" ? row.tournament_id : null;
+      const status = typeof row.status === "string" ? row.status : "joined";
+
+      if (tournamentId !== null && status === "joined") {
+        accumulator[tournamentId] = (accumulator[tournamentId] ?? 0) + 1;
+      }
+
+      return accumulator;
+    }, {});
+
+    setJoinedCounts(counts);
+  }
+
+  function getRemainingSlots(tournament: TournamentRecord) {
+    if (tournament.max_participants === null) {
+      return null;
+    }
+
+    return Math.max(
+      tournament.max_participants - (joinedCounts[tournament.id] ?? 0),
+      0
+    );
+  }
 
   async function loadTournaments(userId: string) {
     setLoadingEvents(true);
@@ -262,6 +327,7 @@ export default function EventDashboardPage() {
 
     setEvents(normalized);
     setLoadingEvents(false);
+    await loadJoinCounts();
   }
 
   useEffect(() => {
@@ -353,6 +419,8 @@ export default function EventDashboardPage() {
       entry_fee: asNullableInt(editForm.entry_fee),
       rules_guidelines: asNullableString(editForm.rules_guidelines),
       status: asNullableString(editForm.status) ?? "draft",
+      allow_kata: editForm.allow_kata,
+      allow_kumite: editForm.allow_kumite,
     };
 
     const updatePayload = { ...payload };
@@ -388,6 +456,19 @@ export default function EventDashboardPage() {
       alert(`Error updating tournament: ${error.message}`);
       setSavingEdit(false);
       return;
+    }
+
+    const organizerMirrorUpdate = await supabase
+      .from("organizer_tourna")
+      .update({
+        tourna_name: editForm.tournament_name.trim(),
+        organizer: userName,
+      })
+      .eq("organizer_id", organizerId)
+      .eq("tournament_id", editingEvent.id);
+
+    if (organizerMirrorUpdate.error) {
+      console.warn("Organizer mirror update failed:", organizerMirrorUpdate.error.message);
     }
 
     await loadTournaments(organizerId);
@@ -569,6 +650,14 @@ export default function EventDashboardPage() {
                     <span className="font-semibold text-gray-800">Max Participants:</span>{" "}
                     {formatCapacity(event.max_participants)}
                   </div>
+                  <div>
+                    <span className="font-semibold text-gray-800">Slots Left:</span>{" "}
+                    {getRemainingSlots(event) === null ? "Open capacity" : getRemainingSlots(event)}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-800">Allowed:</span>{" "}
+                    {formatAllowedCategories(event.allow_kata, event.allow_kumite)}
+                  </div>
                 </div>
               </div>
             ))}
@@ -609,6 +698,8 @@ export default function EventDashboardPage() {
                   <p><strong>Capacity:</strong> {formatCapacity(previewEvent.max_participants)}</p>
                   <p><strong>Entry Fee:</strong> {formatFee(previewEvent.entry_fee)}</p>
                   <p><strong>Registration:</strong> {formatDateRange(previewEvent.reg_start_date, previewEvent.reg_end_date)}</p>
+                  <p><strong>Slots Left:</strong> {getRemainingSlots(previewEvent) === null ? "Open capacity" : getRemainingSlots(previewEvent)}</p>
+                  <p><strong>Allowed Categories:</strong> {formatAllowedCategories(previewEvent.allow_kata, previewEvent.allow_kumite)}</p>
                 </div>
                 <div className="text-sm text-gray-600">
                   <p className="font-semibold text-gray-800">Rules and Guidelines</p>
@@ -641,8 +732,8 @@ export default function EventDashboardPage() {
 
         {editingEvent && editForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-4xl rounded-3xl bg-white p-8 shadow-2xl">
-              <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-3xl bg-white shadow-2xl">
+              <div className="mb-0 flex items-start justify-between gap-4 border-b border-gray-100 px-8 py-6">
                 <div>
                   <h2 className="text-3xl font-black text-gray-900">Edit Tournament</h2>
                   <p className="mt-1 text-sm text-gray-500">
@@ -658,138 +749,187 @@ export default function EventDashboardPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <Field
-                  label="Tournament Name"
-                  name="tournament_name"
-                  value={editForm.tournament_name}
-                  onChange={handleEditChange}
-                  placeholder="Enter tournament name"
-                />
-                <Field
-                  label="Sport"
-                  name="sport"
-                  value={editForm.sport}
-                  onChange={handleEditChange}
-                  placeholder="Enter sport"
-                />
-                <Field
-                  label="Tournament Type"
-                  name="tournament_type"
-                  value={editForm.tournament_type}
-                  onChange={handleEditChange}
-                  placeholder="e.g. Open Championship"
-                />
-                <Field
-                  label="Category"
-                  name="category"
-                  value={editForm.category}
-                  onChange={handleEditChange}
-                  placeholder="e.g. Senior Kumite"
-                />
-                <Field
-                  label="Start Date"
-                  name="start_date"
-                  type="date"
-                  value={editForm.start_date}
-                  onChange={handleEditChange}
-                />
-                <Field
-                  label="End Date"
-                  name="end_date"
-                  type="date"
-                  value={editForm.end_date}
-                  onChange={handleEditChange}
-                />
-                <Field
-                  label="Venue"
-                  name="venue"
-                  value={editForm.venue}
-                  onChange={handleEditChange}
-                  placeholder="Enter venue"
-                />
-                <Field
-                  label="Location"
-                  name="location"
-                  value={editForm.location}
-                  onChange={handleEditChange}
-                  placeholder="City, Country"
-                />
-                <Field
-                  label="Registration Start"
-                  name="reg_start_date"
-                  type="date"
-                  value={editForm.reg_start_date}
-                  onChange={handleEditChange}
-                />
-                <Field
-                  label="Registration End"
-                  name="reg_end_date"
-                  type="date"
-                  value={editForm.reg_end_date}
-                  onChange={handleEditChange}
-                />
-                <Field
-                  label="Max Participants"
-                  name="max_participants"
-                  value={editForm.max_participants}
-                  onChange={handleEditChange}
-                  inputMode="numeric"
-                  placeholder="Enter capacity"
-                />
-                <Field
-                  label="Entry Fee"
-                  name="entry_fee"
-                  value={editForm.entry_fee}
-                  onChange={handleEditChange}
-                  inputMode="numeric"
-                  placeholder="Enter fee"
-                />
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={editForm.description}
+              <div className="overflow-y-auto px-8 py-6">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <Field
+                    label="Tournament Name"
+                    name="tournament_name"
+                    value={editForm.tournament_name}
                     onChange={handleEditChange}
-                    rows={4}
-                    className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
-                    placeholder="Enter tournament description"
+                    placeholder="Enter tournament name"
                   />
-                </div>
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
-                    Rules and Guidelines
-                  </label>
-                  <textarea
-                    name="rules_guidelines"
-                    value={editForm.rules_guidelines}
+                  <Field
+                    label="Sport"
+                    name="sport"
+                    value={editForm.sport}
                     onChange={handleEditChange}
-                    rows={4}
-                    className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
-                    placeholder="Enter rules and guidelines"
+                    placeholder="Enter sport"
                   />
-                </div>
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={editForm.status}
+                  <Field
+                    label="Tournament Type"
+                    name="tournament_type"
+                    value={editForm.tournament_type}
                     onChange={handleEditChange}
-                    className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="open">Open</option>
-                    <option value="close">Close</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                    placeholder="e.g. Open Championship"
+                  />
+                  <Field
+                    label="Category"
+                    name="category"
+                    value={editForm.category}
+                    onChange={handleEditChange}
+                    placeholder="e.g. Senior Kumite"
+                  />
+                  <Field
+                    label="Start Date"
+                    name="start_date"
+                    type="date"
+                    value={editForm.start_date}
+                    onChange={handleEditChange}
+                  />
+                  <Field
+                    label="End Date"
+                    name="end_date"
+                    type="date"
+                    value={editForm.end_date}
+                    onChange={handleEditChange}
+                  />
+                  <Field
+                    label="Venue"
+                    name="venue"
+                    value={editForm.venue}
+                    onChange={handleEditChange}
+                    placeholder="Enter venue"
+                  />
+                  <Field
+                    label="Location"
+                    name="location"
+                    value={editForm.location}
+                    onChange={handleEditChange}
+                    placeholder="City, Country"
+                  />
+                  <Field
+                    label="Registration Start"
+                    name="reg_start_date"
+                    type="date"
+                    value={editForm.reg_start_date}
+                    onChange={handleEditChange}
+                  />
+                  <Field
+                    label="Registration End"
+                    name="reg_end_date"
+                    type="date"
+                    value={editForm.reg_end_date}
+                    onChange={handleEditChange}
+                  />
+                  <Field
+                    label="Max Participants"
+                    name="max_participants"
+                    value={editForm.max_participants}
+                    onChange={handleEditChange}
+                    inputMode="numeric"
+                    placeholder="Enter capacity"
+                  />
+                  <Field
+                    label="Entry Fee"
+                    name="entry_fee"
+                    value={editForm.entry_fee}
+                    onChange={handleEditChange}
+                    inputMode="numeric"
+                    placeholder="Enter fee"
+                  />
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={editForm.description}
+                      onChange={handleEditChange}
+                      rows={4}
+                      className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
+                      placeholder="Enter tournament description"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                      Rules and Guidelines
+                    </label>
+                    <textarea
+                      name="rules_guidelines"
+                      value={editForm.rules_guidelines}
+                      onChange={handleEditChange}
+                      rows={4}
+                      className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
+                      placeholder="Enter rules and guidelines"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                      Allowed Competition Categories
+                    </label>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditForm((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  allow_kata: !prev.allow_kata,
+                                }
+                              : prev
+                          )
+                        }
+                        className={`rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                          editForm.allow_kata
+                            ? "border-red-200 bg-red-50 text-red-700"
+                            : "border-gray-200 bg-white text-gray-500"
+                        }`}
+                      >
+                        Kata
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditForm((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  allow_kumite: !prev.allow_kumite,
+                                }
+                              : prev
+                          )
+                        }
+                        className={`rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                          editForm.allow_kumite
+                            ? "border-red-200 bg-red-50 text-red-700"
+                            : "border-gray-200 bg-white text-gray-500"
+                        }`}
+                      >
+                        Kumite
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                      Status
+                    </label>
+                    <select
+                      name="status"
+                      value={editForm.status}
+                      onChange={handleEditChange}
+                      className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-600"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="open">Open</option>
+                      <option value="close">Close</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex gap-3">
+              <div className="mt-0 flex gap-3 border-t border-gray-100 px-8 py-6">
                 <button
                   type="button"
                   onClick={handleSaveEdit}
